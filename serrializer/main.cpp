@@ -6,37 +6,19 @@
 //  Copyright © 2017 fab. All rights reserved.
 //
 
-#include "fb_serial.hpp"
 #include "machine.h"
-#include <fstream>
+#include "app_types.h"
+#include "fs_sink.hpp"
 
+#include <fstream>
 #include <sstream>
 
-// include headers that implement a archive in simple text format
+using namespace std;
 
-
-
-//see http://en.cppreference.com/w/cpp/types/integer
-//struct L{
-//  char c=[90];
-//  float f;
-//  std::string;
-//  int8_t f;
-//};
-
-fs_sink::fs_sink(const char* buffer, int len)
-{
-  this->ofs = new  std::stringstream(std::ios::in | std::ios::out | std::ios::binary);
-}
-
-fs_sink::fs_sink(const char* file)
-{
-  this->ofs = new std::ofstream(file);
-}
 
 
 int main(int argc, const char * argv[]) {
-
+const char* file = "/tmp/dohp.bin";
    
   //create class instance - two different types, inherited
    
@@ -52,11 +34,11 @@ int main(int argc, const char * argv[]) {
     // create and open a character archive for output
   
     // create class instance
-  const gps_position g(35, 59, 24.567f);
+   gps_position g(35, 59, 24.567f);
   
     // save data to archive
   {
-    fs_sink oa("filename");
+    fs_sink oa(file,true);
     oa << g; //write to the sink
     // archive and stream closed when destructors are called
   }
@@ -64,12 +46,9 @@ int main(int argc, const char * argv[]) {
     // ... some time later restore the class instance to its orginal state
   gps_position newg;
   {
-    // create and open an archive for input
-//  std::ifstream ifs("filename");
-//  boost::archive::text_iarchive ia(ifs);
-//    // read class state from archive
-//  ia >> newg;
-//    // archive and stream closed when destructors are called
+     gps_position gp(0,0,0);
+     fs_sink oa(file,false);
+     oa >> gp; //write to the sink
   }
   return 0;  
   
