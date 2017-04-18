@@ -7,21 +7,39 @@
 //
 
 #include "serial_types.hpp"
-
+#include "serial_types_map.h"
 #include "app_types.h"
+#include <assert.h>
 
-template<typename T> fb_serial * createInstance() { return new T; }
-typedef std::map<std::string, fb_serial*(*)()> map_type;
-map_type g_map;
+template<typename T> fb_serial_v1 * createInstance() { return new T; }
 
+/*
+ * gets the static map of serializable types we support in this build
+ * the map enables persisted/streamed types to be unpacked into specific
+ * class instances 
+ */
+map_type& serial_types::get_type_map()
+{
+  static map_type g_map;
+  
+  // every type registered here needs a unique name which is used to map
+  // it to the appropriate constructor
+  g_map[gps_position::name()] = &createInstance<gps_position>;
+  g_map[text_im::name()] = &createInstance<text_im>;  
+  
+  return g_map;    
+}
 
-  fb_serial* serial_types::create(std::string& name)
+fb_serial_v1* serial_types::create(std::string& name)
+{
+  static map_type& m = serial_types::get_type_map();
+  
+  std::map<std::string, fb_serial_v1*(*)()>::iterator it = m.find(name.c_str());
+  if(it == m.end())
   {
-    g_map["gpsthing"] = &createInstance<gps_position>;    
-    
-    std::map<std::string, fb_serial*(*)()>::iterator it = g_map.find(name.c_str());
-    if(it == g_map.end())
-      return NULL;
-    
-    return (*it).second(); 
+    assert(("unregistered type",0));
+    return NULL;
   }
+  
+  return (*it).second(); 
+}

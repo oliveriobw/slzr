@@ -7,70 +7,50 @@
 //
 
 #include "fs_sink.hpp"
-
 #include <fstream>
 #include <sstream>
 
 using namespace std;
 
-fs_sink::fs_sink(const char* buffer, int len)
+fs_sink::fs_sink(const char* buffer, int len, bool write):ofsx(NULL),ifs(NULL)
 {
-//tbd memory buffer
-    //ofs = new  std::stringstream(std::ios::in | std::ios::out | std::ofstream::binary);
-  //ifs = new  std::stringstream(std::ios::in | std::ios::out | std::ifstream::binary);
-  
-  ofsx = NULL;//new  std::stringstream(std::ios::in | std::ios::out | std::ofstream::binary);
-  
+//  if(write)
+//  {
+//      ofsx = new std::stringstream( std::ios::out | std::ofstream::binary);
+//  }
+//  else
+//      ifs = new std::stringstream(std::ios::in | std::ifstream::binary);  
 }
 
-fs_sink::fs_sink(const char* file, bool write)
+fs_sink::fs_sink(const char* file, bool write):ofsx(NULL),ifs(NULL)
 {
   if(write)
   {
-    //deletes the file too
+    //nb: deletes the file too
     ofsx = (  new std::ofstream(file,std::ios::out | std::ofstream::binary));
   }
-
-  ifs = (  new std::ifstream(file,std::ios::in | std::ofstream::binary));
-  
-    //  if(write)
-    //    {
-    //    int r  =std::remove(file);
-    //    cout << "remove res:" <<r <<endl;
-    //    }  
-  
-    //ofs = new std::ofstream(file,std::ios::out | std::ofstream::binary);
-  
-    //  ofstream  _ofs(file,std::ios::out | std::ofstream::binary);
-    //  int g;
-    //  _ofs << &g;
-    //  _ofs << "lol";
-    //  _ofs.close();
-  
-    //  ifs = new std::ifstream(file,std::ios::in | std::ifstream::binary);
+  else
+    ifs = (  new std::ifstream(file,std::ios::in | std::ofstream::binary));
   
   {
-  std::ifstream f( file, std::ios::binary | std::ios::ate);
-  int len  = f.tellg();
-  cout << "current file size = " << len << endl;
-  
+     std::ifstream f( file, std::ios::binary | std::ios::ate);
+     int len  = f.tellg();
+     cout << "current file size = " << len << endl;  
   }
 }
 
 fs_sink::~fs_sink()
 {
-    //((std::ofstream*)ofs)->flush();
-    //((std::ifstream*)ifs)->flush();
-  ofsx->flush();
-  ofsx->close();
-
-  //ifs->flush();
-  ifs->close();
-  
-    //((std::ofstream*)ofs)->close();
-    //((std::ifstream*)ifs)->close();
-  
+  if(ofsx)
+  {
+    ofsx->flush();
+    ofsx->close();
     delete ofsx;
+  }
+
+  if(ifs)
+  {  
+    ifs->close();
     delete ifs;
-  
+  }
 }

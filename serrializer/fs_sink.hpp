@@ -10,21 +10,20 @@
 #define fs_sink_hpp
 
 #include <assert.h>
-
 #include <iostream>
 #include <fstream>
-
 #include "serialize_write.h"
 #include "serialize_read.h"
 #include "app_types.h"
+#include "serial_types_map.h"
 
 struct fs_sink{
   
     //memory buffer
-  fs_sink(const char* buffer, int len);
+  fs_sink(const char* buffer, int len, bool write);
   
     //file
-  fs_sink(const char* file, bool append = false);
+  fs_sink(const char* file, bool write = false);
   ~fs_sink();
   
     //std::ostream* ofs;    
@@ -35,11 +34,10 @@ struct fs_sink{
     // types with specific sizes
     // network order etc
     // T - serialize_write / serialize_read
-    // U - target out buffer class - needs to be a base class or void*
-    // Sink - stream type
-  template <typename T,class U, class Sink> void serialize_(U& out,Sink s)
+    // Sink - ios::iostream stream type 
+  template <typename T,class Sink> void serialize_(fb_serial_v1** out,Sink s)
   {
-  T* r = new T(s);
+    T* r = new T(s);
   
   /*
    1             2               3               4
@@ -55,63 +53,43 @@ struct fs_sink{
    |                             data                              |
    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+    
    */
-  
-  uint16_t protocol = 12;
-    //std::cout << "pos=" <<  s.tellp() << std::endl;
-  r->serialize(protocol);
+    fb_serial_header header;
+    if(*out)
+      header = (*out)->_hdr;
     
-    //tbd instanciate class of correct type here
-  std::string name = out.name();
-  uint16_t sz = name.length();
-  r->serialize(sz);
-    //std::cout << "pos=" <<  s->tellp() << std::endl;
-  r->serialize(name,sz);
-    //std::cout << "pos=" <<  s->tellp() << std::endl;
+  r->serialize_(header._protocol_version);
+  //r->serialize_(header._class_name_sz);
+  r->serialize_(header._class_name,header._class_name_sz);
 
-  fb_serial* p = NULL;
+  fb_serial_v1* p = NULL;
   if(T::unarchiver())
   {
-    //create instance of out type
-    p = serial_types::create(name);
+    //create instance of unserializing out type
+    p = serial_types::create(header._class_name);
     if(!p)
-      return;    
+      return;
+      
+    *out = p;
   }
   else
-    p=&out;
-  
-    //tbd
-    //long p =  s->tellp();
-  typename T::size_type datasz =0;
-    //assert(sizeof datasz == 4);
-    //s->seekp(p + sizeof datasz);    
-  //datasz = p->serialize(r);
-  
-    //std::cout << "pos=" <<  s->tellp() << std::endl;
-    //s->seekp(p);    
-    //std::cout << "pos=" <<  s->tellp() << std::endl;
-  datasz = r->serialize(datasz);
-    //assert(datasz == 4);
-  
-    //std::cout << "pos=" <<  s->tellp() << std::endl;
-    //s->seekp(0,std::ios_base::end);
-    //std::cout << "pos=" <<  s->tellp() << std::endl;
-  
-    //assuming this is the end etc
-    //tbd: close    
-  return;
+    p=*out;
+    
+    //base class is responsible for the data-size field as well
+    //as the custom fields
+    p->serialize(*r);
+    
+    return;
   }
   
-  template <class T> void operator<< (T& out)
+  void pack(fb_serial_v1* out)
   {
-     return serialize_<serialize_write,T,std::ofstream&>(out,*ofsx);
+     return serialize_<serialize_write,std::ofstream&>(&out,*ofsx);
   }  
   
-  template <class T> void operator>> (T& out)
+  void unpack (fb_serial_v1** out)  
   {
-     return serialize_<serialize_read,T,std::ifstream&>(out,*ifs);
-  }  
-  
-  
+    return serialize_<serialize_read,std::ifstream&>(out,*ifs);
+  }      
 };
 
 

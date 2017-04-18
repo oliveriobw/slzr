@@ -8,7 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		C50EDAAA1E9BB95C0006A818 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C50EDAA91E9BB95C0006A818 /* main.cpp */; };
-		C50EDAB31E9BB9CE0006A818 /* fb_serial.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C50EDAB11E9BB9CE0006A818 /* fb_serial.cpp */; };
+		C50EDAB81E9E27DD0006A818 /* fs_sink.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C50EDAB61E9E27DD0006A818 /* fs_sink.cpp */; };
+		C50EDABD1E9E37E80006A818 /* serial_types.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C50EDABB1E9E37E80006A818 /* serial_types.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -26,9 +27,16 @@
 /* Begin PBXFileReference section */
 		C50EDAA61E9BB95C0006A818 /* serrializer */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = serrializer; sourceTree = BUILT_PRODUCTS_DIR; };
 		C50EDAA91E9BB95C0006A818 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
-		C50EDAB11E9BB9CE0006A818 /* fb_serial.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = fb_serial.cpp; sourceTree = "<group>"; };
-		C50EDAB21E9BB9CE0006A818 /* fb_serial.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = fb_serial.hpp; sourceTree = "<group>"; };
 		C50EDAB41E9BBA9A0006A818 /* machine.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = machine.h; sourceTree = "<group>"; };
+		C50EDAB51E9E27A70006A818 /* app_types.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = app_types.h; sourceTree = "<group>"; };
+		C50EDAB61E9E27DD0006A818 /* fs_sink.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = fs_sink.cpp; sourceTree = "<group>"; };
+		C50EDAB71E9E27DD0006A818 /* fs_sink.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = fs_sink.hpp; sourceTree = "<group>"; };
+		C50EDAB91E9E2A870006A818 /* serialize_write.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = serialize_write.h; sourceTree = "<group>"; };
+		C50EDABA1E9E2AB40006A818 /* serialize_read.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = serialize_read.h; sourceTree = "<group>"; };
+		C50EDABB1E9E37E80006A818 /* serial_types.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = serial_types.cpp; sourceTree = "<group>"; };
+		C50EDABC1E9E37E80006A818 /* serial_types.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = serial_types.hpp; sourceTree = "<group>"; };
+		C50EDABE1E9E3C1A0006A818 /* serialize.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = serialize.h; sourceTree = "<group>"; };
+		C50EDABF1E9E79010006A818 /* serial_types_map.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = serial_types_map.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -62,9 +70,16 @@
 			isa = PBXGroup;
 			children = (
 				C50EDAA91E9BB95C0006A818 /* main.cpp */,
-				C50EDAB11E9BB9CE0006A818 /* fb_serial.cpp */,
-				C50EDAB21E9BB9CE0006A818 /* fb_serial.hpp */,
 				C50EDAB41E9BBA9A0006A818 /* machine.h */,
+				C50EDAB51E9E27A70006A818 /* app_types.h */,
+				C50EDAB61E9E27DD0006A818 /* fs_sink.cpp */,
+				C50EDAB71E9E27DD0006A818 /* fs_sink.hpp */,
+				C50EDAB91E9E2A870006A818 /* serialize_write.h */,
+				C50EDABA1E9E2AB40006A818 /* serialize_read.h */,
+				C50EDABB1E9E37E80006A818 /* serial_types.cpp */,
+				C50EDABC1E9E37E80006A818 /* serial_types.hpp */,
+				C50EDABE1E9E3C1A0006A818 /* serialize.h */,
+				C50EDABF1E9E79010006A818 /* serial_types_map.h */,
 			);
 			path = serrializer;
 			sourceTree = "<group>";
@@ -128,7 +143,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				C50EDAAA1E9BB95C0006A818 /* main.cpp in Sources */,
-				C50EDAB31E9BB9CE0006A818 /* fb_serial.cpp in Sources */,
+				C50EDAB81E9E27DD0006A818 /* fs_sink.cpp in Sources */,
+				C50EDABD1E9E37E80006A818 /* serial_types.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
