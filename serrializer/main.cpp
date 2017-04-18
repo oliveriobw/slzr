@@ -50,8 +50,22 @@ int main(int argc, const char * argv[])
     if(b)
       cout << "the content is:" << b->_message << endl;
   }
-   
-   
+
+  {
+    text_im g("12345678910-happy-day");
+    char buffer[100];
+    memset(buffer,'v',100);
+    fs_sink net_stream(buffer,100,true);
+    //prepare to send over a network
+    net_stream.pack(&g);
+    
+    fb_serial_v1* fb = NULL;
+    fs_sink net_stream_in(buffer,100,false);
+    net_stream_in.unpack(&fb);        
+    text_im* b = dynamic_cast<text_im*>(fb);
+    if(b)
+      cout << "the content is:" << b->_message << endl;
+  }
    
    return 0;
 }

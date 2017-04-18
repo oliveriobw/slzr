@@ -12,12 +12,11 @@
 #include "serialize.h"
 
 struct serialize_read  : public sink{
-  
-  
+    
     //memory buffer or file  
-  serialize_read(std::istream& ofs):_ofs(ofs){}
+  serialize_read(std::istream& ifs):_ifs(ifs){}
   
-  std::istream& _ofs;
+  std::istream& _ifs;
 
   float float_swap(float value){
     union v {
@@ -51,7 +50,7 @@ struct serialize_read  : public sink{
   {
     value = 0;
     size_t pos = position();    
-    _ofs.read((char*)&value, sizeof value);  
+    _ifs.read((char*)&value, sizeof value);  
     std::cout << "read uint16_t = " << value <<std::endl;
     value = ntohs(value);
     std::cout << "read uint16_t as = " << value  << ", at=" << pos << std::endl;
@@ -60,7 +59,7 @@ struct serialize_read  : public sink{
   
   virtual size_type serialize_(uint32_t& value)
   {
-    _ofs.read((char*)&value, sizeof value);  
+    _ifs.read((char*)&value, sizeof value);  
     std::cout << value <<std::endl;
     value = ntohl(value);
     std::cout << value <<std::endl;
@@ -69,7 +68,7 @@ struct serialize_read  : public sink{
 
   virtual   size_type serialize_(uint64_t& value)
   {
-    _ofs.read((char*)&value, sizeof value);  
+    _ifs.read((char*)&value, sizeof value);  
     std::cout << value <<std::endl;
     value = ntohll(value);
     std::cout << value <<std::endl;
@@ -80,7 +79,7 @@ struct serialize_read  : public sink{
   virtual   size_type serialize_(float& value)
   {
   //float tbd
-    _ofs.read((char*)&value, sizeof value);  
+    _ifs.read((char*)&value, sizeof value);  
     std::cout << value <<std::endl;
     value = float_swap(value);
     std::cout << value <<std::endl;
@@ -95,11 +94,11 @@ struct serialize_read  : public sink{
   
     char buffer[len+1];
     memset(buffer,0,len+1);
-    _ofs.read(&buffer[0],len);
+    _ifs.read(&buffer[0],len);
         
-    if (!_ofs)
+    if (!_ifs)
     {
-      std::cout << "error: only \"" << _ofs.gcount() << " bytes \" could be read";
+      std::cout << "error: only \"" << _ifs.gcount() << " bytes \" could be read";
       return 0;
     }    
     
@@ -109,7 +108,7 @@ struct serialize_read  : public sink{
 
   virtual size_t position() 
   {
-    size_t pos= _ofs.tellg();
+    size_t pos= _ifs.tellg();
     return pos;
   }
   

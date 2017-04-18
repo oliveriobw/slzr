@@ -16,9 +16,9 @@ struct serialize_write : public sink{
   
   
     //memory buffer or file  
-  serialize_write(std::ofstream& ofs):_ofs(ofs){}
+  serialize_write(std::ostream& ofs):_ofs(ofs){}
   
-  std::ofstream& _ofs;
+  std::ostream& _ofs;
   
   float float_swap(float value){
     union v {
@@ -98,9 +98,9 @@ struct serialize_write : public sink{
     assert(value.length()==len);
     serialize_(len);
             
-    std::ofstream::pos_type p = _ofs.tellp();
+    std::ostream::pos_type p = _ofs.tellp();
     _ofs.write(value.c_str(),len);
-    std::ofstream::pos_type newp = _ofs.tellp();
+    std::ostream::pos_type newp = _ofs.tellp();
     
     assert((newp-p) == len);
     return ((size_type)(newp-p)) + (size_type)sizeof len;  

@@ -19,16 +19,18 @@
 
 struct fs_sink{
   
-    //memory buffer
-  fs_sink(const char* buffer, int len, bool write);
+  //memory buffer
+  fs_sink(char* buffer, int len, bool write);
   
-    //file
+  //file
   fs_sink(const char* file, bool write = false);
   ~fs_sink();
+  void done();
   
-    //std::ostream* ofs;    
-  std::ifstream* ifs;  
-  std::ofstream* ofsx;    
+  std::istream* ifs;  
+  char* _buf;
+  size_t _len;
+  std::ostream* ofsx;    
   
     // write/read
     // types with specific sizes
@@ -78,17 +80,19 @@ struct fs_sink{
     //as the custom fields
     p->serialize(*r);
     
+    done();
+    
     return;
   }
   
   void pack(fb_serial_v1* out)
   {
-     return serialize_<serialize_write,std::ofstream&>(&out,*ofsx);
+     return serialize_<serialize_write,std::ostream&>(&out,*ofsx);
   }  
   
   void unpack (fb_serial_v1** out)  
   {
-    return serialize_<serialize_read,std::ifstream&>(out,*ifs);
+    return serialize_<serialize_read,std::istream&>(out,*ifs);
   }      
 };
 
