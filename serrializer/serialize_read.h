@@ -13,15 +13,15 @@
 
 struct serialize_read  : public sink{
     
-    //memory buffer or file  
+  //memory buffer or file  
   serialize_read(std::istream& ifs):_ifs(ifs){}
   
   std::istream& _ifs;
 
   float float_swap(float value){
     union v {
-      float       f;
-      unsigned int    i;
+      float        f;
+      unsigned int i;
     };
     
     union v val;
@@ -32,60 +32,80 @@ struct serialize_read  : public sink{
     
     return *(float*)&temp;
   }
-
   
   template <typename T> size_type serialize_( T& value)
   {
-    if(sizeof value == sizeof(uint16_t))
-      return serialize_<const uint16_t>((const uint16_t&) value);
-    if(sizeof value == sizeof(uint32_t))
-      return serialize_<const uint32_t>((const uint32_t&) value);
-    if(sizeof value == sizeof(uint64_t))
-      return serialize_<const uint64_t>((const uint64_t&) value);
-    
-    assert(("cast the type to uint32_t or uint64_t",0));
+    assert(0);
+    return 0;
   }
-  
+
+#ifdef DEBUG
   virtual size_type serialize_(uint16_t& value)
   {
-    value = 0;
-    size_t pos = position();    
     _ifs.read((char*)&value, sizeof value);  
-    std::cout << "read uint16_t = " << value <<std::endl;
+    std::cout << "read uint16_t = " << value ;
     value = ntohs(value);
-    std::cout << "read uint16_t as = " << value  << ", at=" << pos << std::endl;
+    std::cout << " => " << value << std::endl;
     return sizeof value;
   }
   
   virtual size_type serialize_(uint32_t& value)
   {
     _ifs.read((char*)&value, sizeof value);  
-    std::cout << value <<std::endl;
+    std::cout << "read uint32_t = " << value ;
     value = ntohl(value);
-    std::cout << value <<std::endl;
+    std::cout << " => " << value << std::endl;
     return sizeof value;
   }
 
   virtual   size_type serialize_(uint64_t& value)
   {
     _ifs.read((char*)&value, sizeof value);  
-    std::cout << value <<std::endl;
+    std::cout << "read uint64_t = " << value ;
     value = ntohll(value);
-    std::cout << value <<std::endl;
+    std::cout << " => " << value << std::endl;
     return sizeof value;
   }
 
     //template <typename T>
   virtual   size_type serialize_(float& value)
   {
-  //float tbd
     _ifs.read((char*)&value, sizeof value);  
-    std::cout << value <<std::endl;
+    std::cout << "read float = " << value ;
     value = float_swap(value);
-    std::cout << value <<std::endl;
+    std::cout << " => " << value << std::endl;
     return sizeof value;
   }
-
+#else
+  virtual size_type serialize_(uint16_t& value)
+  {
+    _ifs.read((char*)&value, sizeof value);  
+    value = ntohs(value);
+    return sizeof value;
+  }
+  
+  virtual size_type serialize_(uint32_t& value)
+  {
+    _ifs.read((char*)&value, sizeof value);  
+    value = ntohl(value);
+    return sizeof value;
+  }
+  
+  virtual   size_type serialize_(uint64_t& value)
+  {
+    _ifs.read((char*)&value, sizeof value);  
+    value = ntohll(value);
+    return sizeof value;
+  }
+  
+  virtual   size_type serialize_(float& value)
+  {
+    _ifs.read((char*)&value, sizeof value);  
+    value = float_swap(value);
+    return sizeof value;
+  }
+#endif
+  
   //reads string size then string payload
   //treats incoming payload like a string - so zero terminated after unpacking  
   virtual size_type serialize_( std::string& value, uint16_t& len)
@@ -103,6 +123,8 @@ struct serialize_read  : public sink{
     }    
     
     value = std::string(buffer);
+    std::cout << "read " << len << " bytes="  << value << std::endl;
+    
     return len;  
   }
 

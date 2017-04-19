@@ -38,54 +38,49 @@ struct serialize_write : public sink{
 
   template <typename T> size_type serialize_( T& value)
   {
-    assert(0);//unexpected type
-    if(sizeof value == sizeof(uint16_t))
-      return serialize_<const uint16_t>((uint16_t&) value);
-    if(sizeof value == sizeof(uint32_t))
-      return serialize_<const uint32_t>((uint32_t&) value);
-    if(sizeof value == sizeof(uint64_t))
-      return serialize_< uint64_t>((uint64_t&) value);
-    
-    assert(("cast the type to uint32_t or uint64_t",0));
+    //unexpected type - use the known types
+    assert(0);
   }
+
+#ifdef DEBUG
   
-  //template <typename T> size_type serialize_( const uint16_t& value)
   virtual size_type serialize_(  uint16_t& value)
   {
-    std::cout << "write uint16_t = " << value <<std::endl;
+    std::cout << "write uint16_t = " << value ;
     uint16_t tmp = htons(value);
     size_t pos = position();
-    std::cout << "write uint16_t as = " << tmp << ", at=" << pos << std::endl;
+    std::cout << " => " << tmp << ", at =" << pos << std::endl;
     _ofs.write((const char*)&tmp, sizeof value);  
     return sizeof tmp;
   }
   
-  //template <typename T>  
   virtual size_type serialize_(  uint32_t& value)
   {
-    std::cout << value <<std::endl;
+    std::cout << "write uint32_t = " << value ;
     uint32_t tmp = htonl(value);
-    std::cout << tmp <<std::endl;
+    size_t pos = position();
+    std::cout << " => " << tmp << ", at =" << pos << std::endl;
     _ofs.write((const char*)&tmp, sizeof value);  
     return sizeof tmp;
   }
   
-  
-  //template <typename T> 
-  virtual  size_type serialize_(  uint64_t& value)
+    virtual  size_type serialize_(  uint64_t& value)
   {
-    std::cout << value <<std::endl;
+    std::cout << "write uint64_t = " << value ;
     uint64_t tmp = htonll(value);
-    std::cout << tmp <<std::endl;
+    size_t pos = position();
+    std::cout << " => " << tmp << ", at =" << pos << std::endl;
     _ofs.write((const char*)&tmp, sizeof value);  
     return sizeof tmp;
   }
 
   virtual  size_type serialize_(  float& value)
   {
-    std::cout << value <<std::endl;    
+    std::cout << "write float = " << value ;
     float tmp = float_swap(value);    
-    std::cout << tmp <<std::endl;
+    size_t pos = position();
+    std::cout << " => " << tmp << ", at =" << pos << std::endl;
+
     _ofs.write((const char*)&tmp, sizeof value);  
     return sizeof tmp;
   }
@@ -101,11 +96,53 @@ struct serialize_write : public sink{
     std::ostream::pos_type p = _ofs.tellp();
     _ofs.write(value.c_str(),len);
     std::ostream::pos_type newp = _ofs.tellp();
-    
+    std::cout << "wrote=\"" << value << "\"" << std::endl;
     assert((newp-p) == len);
     return ((size_type)(newp-p)) + (size_type)sizeof len;  
   }
+#else
 
+  virtual size_type serialize_(  uint16_t& value)
+  {
+    uint16_t tmp = htons(value);
+    _ofs.write((const char*)&tmp, sizeof value);  
+    return sizeof tmp;
+  }
+  
+  virtual size_type serialize_(  uint32_t& value)
+  {
+    uint32_t tmp = htonl(value);
+    _ofs.write((const char*)&tmp, sizeof value);  
+    return sizeof tmp;
+  }
+  
+  virtual  size_type serialize_(  uint64_t& value)
+  {
+    uint64_t tmp = htonll(value);
+    _ofs.write((const char*)&tmp, sizeof value);  
+    return sizeof tmp;
+  }
+  
+  virtual  size_type serialize_(  float& value)
+  {
+    float tmp = float_swap(value);    
+    _ofs.write((const char*)&tmp, sizeof value);  
+    return sizeof tmp;
+  }
+  
+  /**
+   serializes size folowed by string payload. 
+   */
+  size_type serialize_( std::string& value, uint16_t& len)
+  {
+    serialize_(len);  
+    std::ostream::pos_type p = _ofs.tellp();
+    _ofs.write(value.c_str(),len);
+    std::ostream::pos_type newp = _ofs.tellp();
+    return ((size_type)(newp-p)) + (size_type)sizeof len;  
+  }  
+#endif
+  
   virtual size_t position() 
   {
       size_t pos= _ofs.tellp();
@@ -143,10 +180,8 @@ struct serialize_write : public sink{
   {
     return true;
   }
-  
-  
-  static bool unarchiver(){ return false; }
-  
+    
+  static bool unarchiver(){ return false; }  
 };
 
 
