@@ -23,19 +23,20 @@ struct sink
 
   sink():data_sz_pos(INVALID_DATA_SZ_POS){}
 
-  virtual size_type serialize_(  uint16_t& value)=0;
-  virtual size_type serialize_(  uint32_t& value)=0;
-  virtual size_type serialize_(  uint64_t& value)=0;
-  virtual size_type serialize_(  float& value)=0;
-  virtual size_type serialize_( std::string& value, uint16_t& len)=0;
+  virtual size_type serialize( uint8_t& value)=0;
+  virtual size_type serialize( uint16_t& value)=0;
+  virtual size_type serialize( uint32_t& value)=0;
+  virtual size_type serialize( uint64_t& value)=0;
+  virtual size_type serialize( float& value)=0;
+  virtual size_type serialize( uint8_t* value, uint32_t& sz)=0;
+  virtual size_type serialize( std::string& value, uint16_t& len)=0;
 
   virtual void serialize_data_size_init()=0;
   virtual void serialize_data_size(const size_type size)=0;
   virtual bool verify_data_size(const size_type size)=0;
 
-protected:
+  protected:
   size_t data_sz_pos;
-
 };
 
 #endif /* serialize_h */

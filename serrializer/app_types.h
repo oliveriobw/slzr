@@ -35,7 +35,7 @@ struct text_im : public fb_serial_v1
   uint32_t serialize_payload(class sink& s) 
   {
     uint16_t len = _message.length();
-    uint32_t done = s.serialize_(_message,len);
+    uint32_t done = s.serialize(_message,len);
     return done;
   }    
 };
@@ -44,23 +44,29 @@ struct text_im : public fb_serial_v1
  pgs coords class
  demonstrates how data members might be serialized 
  */
+const int  bufsz  = 10;
 struct gps_position : public fb_serial_v1
 {
-    // the custom class data
-    // helpfully the compiler objects to these non size specific types, 
-    // so we'll be forced to cast or change to size-specific type
+  // the custom class data
+  // helpfully the compiler objects to these non size specific types, 
+  // so we'll be forced to cast or change to size-specific type
   int degrees;
   int minutes;
   float seconds;
+  char dummy_char;
   
-    //constructors
+  //demonstrates using fixed size buffer
+  uint8_t random_buf[bufsz];
+  
+  //constructors
   gps_position():fb_serial_v1(2,gps_position::name()){}  
   gps_position(int d, int m, float s) :  degrees(d), minutes(m), 
   seconds(s) ,fb_serial_v1(2,gps_position::name()){}
   
-  static std::string name(){ 
-      // Also demonstrates utf8 usage
-      // Chinese characters for "zhongwen" : ‘中文’
+  static std::string name()
+  { 
+    // Also demonstrates utf8 usage
+    // Chinese characters for "zhongwen" : ‘中文’
     const char utf8_classname[] = {-28, -72, -83, -26, -106, -121, 0};
     return utf8_classname;
   }
@@ -68,29 +74,35 @@ struct gps_position : public fb_serial_v1
   uint32_t serialize_payload(class sink& s) 
   {
     uint32_t type_size=
-    sizeof  degrees +
-    sizeof  minutes +
-    sizeof  seconds ;
-    
-      //
-      // optional - if we're expecting POD types of specific total sizes
-      // check it here
-      // 
-      // if we ever wanted to allow future adding to this type without breaking
-      // old clients we would have to drop this step
-      //
+      sizeof  degrees +
+      sizeof  minutes +
+      sizeof  seconds +
+      sizeof  dummy_char + bufsz;
+
+    //
+    // optional - if we're expecting POD types of specific total sizes
+    // check it here
+    // 
+    // if we ever wanted to allow future adding to this type without breaking
+    // old clients we would have to drop this step
+    //
     if(!s.verify_data_size(type_size))
     {
         //std::cout << "unexpected size deserializing" << std::endl;
         //return 0;  
     }
-    
+
       // just serialize data members in a predetermined order
       // this is the same code for un/serializing
     uint32_t done = 0;
-    done += s.serialize_((uint32_t&)degrees);
-    done += s.serialize_((uint32_t&)minutes);
-    done += s.serialize_((float&)seconds);
+    done += s.serialize((uint32_t&) degrees);
+    done += s.serialize((uint32_t&) minutes);
+    done += s.serialize((float&)    seconds);
+    done += s.serialize((uint8_t&)  dummy_char);
+  
+    uint32_t sz = bufsz;
+    done += s.serialize((uint8_t*)random_buf,sz);
+  
     return done;
   }  
   
@@ -152,7 +164,7 @@ struct list_type : public fb_serial_v1
     // the count of instances must be serialized first - even if it's not an 
     // explicit data member as in this class 
     std::vector<text_im*>::size_type  list_size = list.size();
-    done += s.serialize_((uint32_t&)list_size);
+    done += s.serialize((uint32_t&)list_size);
     
     if(list.size()==0 && list_size>0)
     {
@@ -167,6 +179,45 @@ struct list_type : public fb_serial_v1
     }
     
     
+    return done;
+  }    
+};
+
+/*
+ Demonstrates how data members might be serialized - all intrinsic types tested
+ */
+struct types_test : public fb_serial_v1
+{
+    //config for this class
+  static std::string name() { return "types_test";}
+  static uint16_t version() { return 1; }
+  
+  //custom payload
+  int8_t  a;
+  int16_t b;
+  int32_t d;
+  int64_t e;
+  uint8_t  ua;
+  uint16_t ub;
+  uint32_t ud;
+  uint64_t ue;
+  
+    //constructors
+  types_test():fb_serial_v1(types_test::version(),types_test::name()){}  
+  types_test(std::string message) : fb_serial_v1(types_test::version(),types_test::name()){}
+  
+    // serilisation of custom data using sink class methods
+  uint32_t serialize_payload(class sink& s) 
+  {
+    uint32_t done = 0;
+    done += s.serialize((uint8_t&)a);
+    done += s.serialize((uint16_t&)b);
+    done += s.serialize((uint32_t&)d);
+    done += s.serialize((uint64_t&)e);
+    done += s.serialize(ua);
+    done += s.serialize(ub);
+    done += s.serialize(ud);
+    done += s.serialize(ue);
     return done;
   }    
 };

@@ -47,9 +47,9 @@ struct fs_sink
   // network order etc
   // T - serialize_write / serialize_read
   // Sink - ios::iostream stream type 
-  template <typename T,class Sink> bool serialize_(fb_serial_v1** out,Sink s)
+  template <typename SerializeType,class Sink> bool serialize(fb_serial_v1** out,Sink s)
   {
-    T r(s);
+    SerializeType r(s);
     
     /*
      1             2               3               4
@@ -58,24 +58,24 @@ struct fs_sink
      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
      |                      Class Name UTF8                          |
      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-     |      Class  Version         |          Data Size              |
+     |      Class  Version         |          Data Size ->           |
      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-     |       Data Size             |               data              |
+     |    <-- Data Size            |               data ->           |
      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-     |                             data                              |
+     |                          <-- data -->                         |
      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+    
      */
     fb_serial_header header;
     if(*out)
       header = (*out)->_hdr;
     
-    r.serialize_(header._protocol_version);
-    r.serialize_(header._class_name,header._class_name_sz);
+    r.serialize(header._protocol_version);
+    r.serialize(header._class_name,header._class_name_sz);
     
     fb_serial_v1* p = NULL;
-    if(T::unarchiver())
+    if(SerializeType::unarchiver())
     {
-        //create instance of unserializing out type
+      //create instance of unserializing out type
       p = serial_types::create(header._class_name);
       if(!p)
         return false;
@@ -85,12 +85,10 @@ struct fs_sink
     else
       p=*out;
     
-      //base class is responsible for the data-size field as well
-      //as the custom fields
-    p->serialize(r);
-    
-    done();
-    
+    //base class is responsible for the data-size field as well
+    //as the custom fields
+    p->serialize(r);    
+    done();    
     return true;
   }
   
@@ -98,15 +96,21 @@ struct fs_sink
   {
     if(!ofsx)
       return false;
-    return serialize_<serialize_write,std::ostream&>(&out,*ofsx);
+    if(!out)
+      return false;      
+    return serialize<serialize_write,std::ostream&>(&out,*ofsx);
   }  
-  
+
+  //returns an object on the heap, for the caller to delete
   bool unpack (fb_serial_v1** out)  
   {
     if(!ifs)
       return false;
-    
-    return serialize_<serialize_read,std::istream&>(out,*ifs);
+  
+    if(!out)
+      return false;
+  
+    return serialize<serialize_read,std::istream&>(out,*ifs);
   }      
 };
 

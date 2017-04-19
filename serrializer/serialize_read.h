@@ -33,14 +33,22 @@ struct serialize_read  : public sink{
     return *(float*)&temp;
   }
   
-  template <typename T> size_type serialize_( T& value)
+  template <typename T> size_type serialize( T& value)
   {
     assert(0);
     return 0;
   }
 
 #ifdef DEBUG
-  virtual size_type serialize_(uint16_t& value)
+  virtual size_type serialize(uint8_t& value)
+  {
+    _ifs.read((char*)&value, sizeof value);  
+    std::cout << "read uint8_t = " << value ;
+    std::cout << " => " << value << std::endl;
+    return sizeof value;
+  }
+
+  virtual size_type serialize(uint16_t& value)
   {
     _ifs.read((char*)&value, sizeof value);  
     std::cout << "read uint16_t = " << value ;
@@ -48,8 +56,8 @@ struct serialize_read  : public sink{
     std::cout << " => " << value << std::endl;
     return sizeof value;
   }
-  
-  virtual size_type serialize_(uint32_t& value)
+
+  virtual size_type serialize(uint32_t& value)
   {
     _ifs.read((char*)&value, sizeof value);  
     std::cout << "read uint32_t = " << value ;
@@ -58,7 +66,7 @@ struct serialize_read  : public sink{
     return sizeof value;
   }
 
-  virtual   size_type serialize_(uint64_t& value)
+  virtual   size_type serialize(uint64_t& value)
   {
     _ifs.read((char*)&value, sizeof value);  
     std::cout << "read uint64_t = " << value ;
@@ -67,8 +75,7 @@ struct serialize_read  : public sink{
     return sizeof value;
   }
 
-    //template <typename T>
-  virtual   size_type serialize_(float& value)
+  virtual   size_type serialize(float& value)
   {
     _ifs.read((char*)&value, sizeof value);  
     std::cout << "read float = " << value ;
@@ -77,40 +84,66 @@ struct serialize_read  : public sink{
     return sizeof value;
   }
 #else
-  virtual size_type serialize_(uint16_t& value)
+  virtual size_type serialize(uint8_t& value)
+  {
+    _ifs.read((char*)&value, sizeof value);  
+    return sizeof value;
+  }
+
+  virtual size_type serialize(uint16_t& value)
   {
     _ifs.read((char*)&value, sizeof value);  
     value = ntohs(value);
     return sizeof value;
   }
   
-  virtual size_type serialize_(uint32_t& value)
+  virtual size_type serialize(uint32_t& value)
   {
     _ifs.read((char*)&value, sizeof value);  
     value = ntohl(value);
     return sizeof value;
   }
   
-  virtual   size_type serialize_(uint64_t& value)
+  virtual   size_type serialize(uint64_t& value)
   {
     _ifs.read((char*)&value, sizeof value);  
     value = ntohll(value);
     return sizeof value;
   }
   
-  virtual   size_type serialize_(float& value)
+  virtual   size_type serialize(float& value)
   {
     _ifs.read((char*)&value, sizeof value);  
     value = float_swap(value);
     return sizeof value;
   }
 #endif
-  
+
+  size_type serialize( uint8_t* buffer, uint32_t& len)
+  {
+    serialize(len);
+    
+    //char buffer[len+1];
+    //memset(buffer,0,len+1);
+    _ifs.read((char*)buffer,len);
+    
+    if (!_ifs)
+      {
+      std::cout << "error: only \"" << _ifs.gcount() << " bytes \" could be read";
+      return 0;
+      }    
+    
+//    value = std::string(buffer);
+//    std::cout << "read " << len << " bytes="  << value << std::endl;//nb: as string
+    
+    return len;  
+  }
+
   //reads string size then string payload
   //treats incoming payload like a string - so zero terminated after unpacking  
-  virtual size_type serialize_( std::string& value, uint16_t& len)
+  virtual size_type serialize( std::string& value, uint16_t& len)
   {
-    serialize_(len);
+    serialize(len);
   
     char buffer[len+1];
     memset(buffer,0,len+1);
@@ -123,7 +156,7 @@ struct serialize_read  : public sink{
     }    
     
     value = std::string(buffer);
-    std::cout << "read " << len << " bytes="  << value << std::endl;
+  std::cout << "read " << len << " bytes="  << value << std::endl;//nb: as string
     
     return len;  
   }
@@ -142,7 +175,7 @@ struct serialize_read  : public sink{
   // get the data size field from the current position
   virtual void serialize_data_size_init()
   {
-    serialize_(data_size); 
+    serialize(data_size); 
   }
 
   // no-op when reading  

@@ -73,9 +73,7 @@ struct fb_serial_header{
 
 /*
  *
- *
  *  Base class for all types needing serialize support  
- *
  *
 */
 struct fb_serial_v1{
@@ -86,6 +84,11 @@ struct fb_serial_v1{
   //Classes provide versions and unique names 
   fb_serial_v1(uint16_t ver, std::string class_id):
      _hdr(FB_SERIAL_PROT_VER,ver,class_id) {}
+
+  // Will need delete via derived-class on heap usage:
+  // There is no need to redeclare the destructors virtual in the derived classes
+  // either, or even provide empty implementations. 
+  virtual ~fb_serial_v1(){}
 
   /**
    Serialises custom payloads including the size field

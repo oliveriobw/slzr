@@ -11,7 +11,7 @@
 #include "app_types.h"
 #include <assert.h>
 
-template<typename T> fb_serial_v1 * createInstance() { return new T; }
+template<typename T> fb_serial_v1 * create_inst() { return new T; }
 
 /*
  * gets the static map of serializable types we support in this build
@@ -24,10 +24,11 @@ map_type& serial_types::get_type_map()
   
   // every type registered here needs a unique name which is used to map
   // it to the appropriate constructor
-  g_map[gps_position::name()] = &createInstance<gps_position>;
-  g_map[text_im::name()] = &createInstance<text_im>;  
-  g_map[compound_type::name()] = &createInstance<compound_type>;  
-  g_map[list_type::name()] = &createInstance<list_type>;  
+  g_map[gps_position::name()] = &create_inst<gps_position>;
+  g_map[text_im::name()] = &create_inst<text_im>;  
+  g_map[compound_type::name()] = &create_inst<compound_type>;  
+  g_map[list_type::name()] = &create_inst<list_type>;  
+  g_map[types_test::name()] = &create_inst<types_test>;  
   
   return g_map;    
 }
