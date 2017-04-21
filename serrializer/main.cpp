@@ -1,12 +1,19 @@
 //
 //  main.cpp
-//  serializer
+//  serial
 //
-//  Created by B Wigley on 10/04/2017.
+//  Demonstrates serialisation classes:
+//
+//    Types can be serialised/deserialised to/from files or 
+//    buffers ready for network transmission. See app_types.h for sample classes. 
+//
+//    Data is serialised in network byte order and deserialised into host byte 
+//    order. 
+//
+//  Created by O Wigley on 10/04/2017.
 //  Copyright © 2017 fab. All rights reserved.
 //
 
-#include "machine.h"
 #include "app_types.h"
 #include "fs_sink.hpp"
 #include <fstream>
@@ -16,9 +23,56 @@ using namespace std;
 
 int main(int argc, const char * argv[]) 
 {
+  const char* file = "/tmp/test_data.bin";  
+  
+  {
+    coords g;
+    g._lat = -10.67;
+    g._lng = 53.3456;
+  
+    fs_sink oa(file,true);    //archive file
+    oa.pack(&g);            //persist to file
+  
+    //restore data
+    fb_serial_v1* fb = NULL;
+    fs_sink input(file,false);
+    input.unpack(&fb);        
+    coords* b = dynamic_cast<coords*>(fb);
+    assert(b);
+    assert(b->_lat == g._lat);
+    assert(b->_lng == g._lng);
+    delete b;
+  }
+  
+  {
+    //the buffers could be larger in some instances but not here
+    const int bufsz = sizeof(coords); 
+    char buffer[bufsz];
+    memset(buffer,'v',bufsz);
+  
+    coords g;
+    g._lat = -34.67;
+    g._lng = 65.3456;
+  
+    //pack into buffer
+    fs_sink net_stream(buffer,bufsz,true);
+    net_stream.pack(&g);
+  
+    //decode buffer into type:
+    fb_serial_v1* fb = NULL;
+    fs_sink net_stream_in(buffer,bufsz,false);    
+    net_stream_in.unpack(&fb);        
+  
+    coords* b = dynamic_cast<coords*>(fb);
+    assert(b);
+    if(b)
+    {
+      cout << "decoded coords instance:" <<  endl;
+      delete b;
+    }  
+  }
   // save data to archive
   {
-    const char* file = "/tmp/dohp11.bin";  
     gps_position g(35, 59, 24.567f);
   
     //also checks an internal buffer of data 
@@ -46,7 +100,6 @@ int main(int argc, const char * argv[])
   }
   
   {
-    const char* file = "/tmp/d.bin";  
     //serialize
     text_im g("12345");
     fs_sink oa(file,true);
@@ -60,20 +113,23 @@ int main(int argc, const char * argv[])
     assert(b);
     if(b)
     {
+      assert(b->_message=="12345");
       cout << "decoded text_im instance:" << b->_message << endl;
       delete b;
     }
   }
   
-  {    
+  {
+    //using memory buffers not files
     const int bufsz=100;
     char buffer[bufsz];
     memset(buffer,'v',bufsz);
     char buffer2[bufsz];
     memset(buffer2,'v',bufsz);
 
-    //unpack two types with one sink instance
-    text_im g("12345678910 happy-day");
+    //unpack two types with one serial instance
+    const char* cstr = "12345678910 this is the day my life will surely ...";
+    text_im g(cstr);
     gps_position gps(30, 25, 24.123f);
     gps.random_buf[0] = 'a';
     gps.random_buf[1] = 'b';
@@ -96,6 +152,7 @@ int main(int argc, const char * argv[])
     assert(b);
     if(b)
     {
+      assert(b->_message==cstr);
       cout << "decoded text_im instance:" << b->_message << endl;
     }
     
@@ -103,12 +160,13 @@ int main(int argc, const char * argv[])
     if(fb->_hdr._class_name==text_im::name())
     {
       b = (text_im*)fb;
+      assert(b->_message==cstr);
       cout << "decoded text_im instance:" << b->_message << endl;
     }
     delete fb;
     fb = NULL;
 
-    //supply a new input stream
+    //supply a new input stream of packed data
     net_stream_in.set_buf(buffer2,bufsz);
     net_stream_in.unpack(&fb);        
     gps_position* bg = dynamic_cast<gps_position*>(fb);
@@ -126,8 +184,12 @@ int main(int argc, const char * argv[])
 
   {
     //compound types
-    const char* file = "/tmp/dddww.bin";  
-    compound_type g;
+    compound_type g;  
+    g.pos.minutes=33;
+    g.pos.seconds=3.3;
+    g.pos.degrees=8;
+    g.im._message="hi people";
+  
     fs_sink oa(file,true);
     oa.pack(&g);
     
@@ -139,6 +201,10 @@ int main(int argc, const char * argv[])
     assert(b);
     if(b)
     {
+      assert(b->im._message == g.im._message);
+      assert(b->pos.minutes == g.pos.minutes);
+      assert(b->pos.seconds == g.pos.seconds);
+      assert(b->pos.degrees == g.pos.degrees);
       cout << "decoded compound_type instance with text_im:" << b->im._message << endl;
       cout << "decoded compound_type instance with gps_position:" << b->pos.seconds << endl;
       delete b;
@@ -147,7 +213,6 @@ int main(int argc, const char * argv[])
 
   {
     //variable lists tests
-    const char* file = "/tmp/dohlist.bin";
     list_type l;
     text_im* a = new text_im("hello");
     text_im* b = new text_im("world");
@@ -164,7 +229,7 @@ int main(int argc, const char * argv[])
     assert(d);
     if(d)
     {
-      std::vector<text_im*>::iterator it = d->list.begin();
+      vector<text_im*>::iterator it = d->list.begin();
       for(;it!=d->list.end();++it)
       {
         cout << "decoded list_type instance:" << (*it)->_message << endl;
@@ -262,5 +327,8 @@ int main(int argc, const char * argv[])
       delete b;
     }
   }  
+  
+  cout << "success: 9 tests completed" << endl;
+  
   return 0;
 }

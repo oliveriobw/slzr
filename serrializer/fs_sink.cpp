@@ -15,18 +15,18 @@ using namespace std;
 /**
  * Prepares buffer for packing/unpacking
  */
-fs_sink::fs_sink(char* buffer, int len, bool pack):ofsx(NULL),ifs(NULL),_len(0),_buf(NULL),_pack(pack)
+fs_sink::fs_sink(char* buffer, int len, bool pack):_ofsx(NULL),_ifs(NULL),_len(0),_buf(NULL),_pack(pack)
 {
   if(pack)
   {
-      ofsx = new std::stringstream( std::ios::out |std::ios::in | std::ofstream::binary);
+      _ofsx = new stringstream( ios::out |ios::in | ofstream::binary);
       _buf=buffer;
       _len=len;
   }
   else
   {
-      ifs = new std::stringstream(std::ios::in |std::ios::out| std::ifstream::binary);
-      std::streambuf * pbuf = ifs->rdbuf();
+      _ifs = new stringstream(ios::in |ios::out| ifstream::binary);
+      streambuf * pbuf = _ifs->rdbuf();
       pbuf->sputn (buffer,len);
   }  
 }
@@ -34,24 +34,23 @@ fs_sink::fs_sink(char* buffer, int len, bool pack):ofsx(NULL),ifs(NULL),_len(0),
 /**
  * Prepares file for packing/unpacking
  */
-fs_sink::fs_sink(const char* file, bool pack):ofsx(NULL),ifs(NULL), _len(0),_buf(NULL),_pack(pack)
+fs_sink::fs_sink(const char* file, bool pack):_ofsx(NULL),_ifs(NULL), _len(0),_buf(NULL),_pack(pack)
 {
   if(pack)
   {
-    //nb: deletes the file
-    ofsx = (  new std::ofstream(file,std::ios::out | std::ofstream::binary));
+    _ofsx = (  new ofstream(file,ios::out | ofstream::binary));
   }
   else
   {
-    ifs = (  new std::ifstream(file,std::ios::in | std::ofstream::binary));
+    _ifs = (  new ifstream(file,ios::in | ofstream::binary));
   }  
 }
 
 fs_sink::~fs_sink()
 {
   done();
-  delete ofsx;
-  delete ifs;   
+  delete _ofsx;
+  delete _ifs;   
 }
 
 /**
@@ -59,11 +58,11 @@ fs_sink::~fs_sink()
  */
 void fs_sink::done()
 {
-  if(ofsx)
+  if(_ofsx)
   {
-    ofsx->flush();
+    _ofsx->flush();
 
-    std::ofstream* file = out_file();
+    ofstream* file = out_file();
     if(file)
     {
       cout << "closed serialised file" << endl;
@@ -76,21 +75,18 @@ void fs_sink::done()
         buf->seekg(0);
         buf->read(_buf,_len);
         cout << "closed serialised buffer" << endl;
-    }
-    
+    }    
   }
   
-  if(ifs)
+  if(_ifs)
   {  
-    std::ofstream* file = in_file();
+    ofstream* file = in_file();
     if(file)
     {
         file->close();
         cout << "closed input file" << endl;
-    }
-    
-  }
-  
+    }    
+  }  
 }
 
 /**
@@ -100,14 +96,14 @@ bool fs_sink::set_buf(char* buffer, int len)
 {
   if(!_pack)
   {
-    if(ifs)
-      delete ifs;
-    ifs = new std::stringstream(std::ios::in |std::ios::out| std::ifstream::binary);
-    if(ifs)
+    if(_ifs)
+      delete _ifs;
+    _ifs = new stringstream(ios::in |ios::out| ifstream::binary);
+    if(_ifs)
     {
-      std::streambuf * pbuf = ifs->rdbuf();
+      streambuf * pbuf = _ifs->rdbuf();
       pbuf->sputn (buffer,len);      
-      ifs->seekg(0);
+      _ifs->seekg(0);
       return true;
     }
   }
@@ -121,7 +117,7 @@ ofstream* fs_sink::out_file()
 {
   try
   {
-    std::ofstream* file = dynamic_cast<std::ofstream*>(ofsx);
+    ofstream* file = dynamic_cast<ofstream*>(_ofsx);
     if(file)
       return file;
   }
@@ -139,7 +135,7 @@ stringstream* fs_sink::out_buf()
 {
   try
   {
-    std::stringstream* b = dynamic_cast<std::stringstream*>(ofsx);
+    stringstream* b = dynamic_cast<stringstream*>(_ofsx);
     if(b)
       return b;
   }
@@ -157,7 +153,7 @@ ofstream* fs_sink::in_file()
 {
   try
   {
-    std::ofstream* file = dynamic_cast<std::ofstream*>(ifs);
+    ofstream* file = dynamic_cast<ofstream*>(_ifs);
     if(file)
       return file;
   }
@@ -175,7 +171,7 @@ stringstream* fs_sink::in_buf()
 {
   try
   {
-    std::stringstream* b = dynamic_cast<std::stringstream*>(ifs);
+    stringstream* b = dynamic_cast<stringstream*>(_ifs);
     if(b)
       return b;
   }

@@ -19,6 +19,8 @@
  
  Protocol Specification
  
+ 
+ 
  1             2               3               4
  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  |       Protocol Version      |        Class Name Size          |       
@@ -32,27 +34,26 @@
  |                             data                              |
  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  
- Types:
+ C++ Types:
  
- fb_serial_header
+ fb_serial_header manages these fields:
       Protocol Version
       Class Name Size
       Class Name UTF8
       Class Version
  
  fb_serial_v1
-      Implements class managment for Protocl Version 1 (latest/only version)
+      Implements class managment for Protocol Version 1 (latest/only version)
+      Custom types needing serialisation support inherit from this class. 
                  
 */
 
-
-class serialize_read;
 
 /**
  *   fb_serial_header represents the common binary header for all serialisable 
  *   types. 
  *   
- *   A traditional c struct POD type  
+ *   A traditional c struct POD type (not inherited)  
  *
  */
 struct fb_serial_header{
@@ -62,6 +63,7 @@ struct fb_serial_header{
   std::string  _class_name;
   uint16_t     _class_version;  //the nested class version
   
+  // Needed only for deserialisation
   fb_serial_header(){}
   
   fb_serial_header(uint16_t pro_ver,uint16_t ver, std::string class_id):
@@ -78,26 +80,30 @@ struct fb_serial_header{
 */
 struct fb_serial_v1{
 
-  //Common header for all types
+  //Common header
   fb_serial_header _hdr;
   
   //Classes provide versions and unique names 
   fb_serial_v1(uint16_t ver, std::string class_id):
      _hdr(FB_SERIAL_PROT_VER,ver,class_id) {}
 
+  // FYI: We do not want a default constructor here as it is an abstract class
+  // but more importantly it's essential the class is created with a specific
+  // protocol version and class name
+  
   // Will need delete via derived-class on heap usage:
-  // There is no need to redeclare the destructors virtual in the derived classes
-  // either, or even provide empty implementations. 
+  // FYI: There is no need to redeclare the destructors virtual in the derived 
+  // classes or provide empty implementations. 
   virtual ~fb_serial_v1(){}
 
   /**
-   Serialises custom payloads including the size field
-  */
-  virtual uint32_t serialize(sink& sink)
+   * Serialises custom payloads including the size field
+   */
+  virtual uint32_t serialize(serial& serial)
   {
-    sink.serialize_data_size_init();
-    uint32_t size = serialize_payload(sink);
-    sink.serialize_data_size(size);
+    serial.serialize_data_size_init();
+    uint32_t size = serialize_payload(serial);
+    serial.serialize_data_size(size);
     return size;
     
   }
@@ -105,14 +111,12 @@ struct fb_serial_v1{
   protected:
   
   // classes are to implement their own data members' serialisation using
-  // sink class methods
+  // serial class methods
   // Only the base class can invoke this, to ensure the datra size field is 
   // correctly managed
   // Must return size or data written/read
-  virtual uint32_t serialize_payload(struct sink& serializer) = 0;
+  virtual uint32_t serialize_payload(struct serial& serial) = 0;
 
-  private:
-   fb_serial_v1(){} 
 };
 
 

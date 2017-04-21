@@ -17,6 +17,8 @@
 #include "app_types.h"
 #include "serial_types_map.h"
 
+using namespace std;
+
 /**
  * Sink class for buffers/files
  *
@@ -24,28 +26,16 @@
  */
 struct fs_sink
 {  
-    //memory buffer or file based packing/unpacking
+  //memory buffer or file based packing/unpacking
   fs_sink(char* buffer, int len, bool pack = false);
-  fs_sink(const char* file, bool pack = false);
-  
+  fs_sink(const char* file, bool pack = false);  
   ~fs_sink();
-  void done();
-  std::ofstream* out_file();
-  std::stringstream* out_buf();
-  std::ofstream* in_file();
-  std::stringstream* in_buf();
-  bool set_buf(char* buffer, int len);
-  
-  std::istream* ifs;  
-  char* _buf;
-  size_t _len;
-  bool _pack;
-  std::ostream* ofsx;    
+  bool set_buf(char* buffer, int len);  
   
   // write/read
   // types with specific sizes
   // network order etc
-  // T - serialize_write / serialize_read
+  // T - serial_write / serial_read
   // Sink - ios::iostream stream type 
   template <typename SerializeType,class Sink> bool serialize(fb_serial_v1** out,Sink s)
   {
@@ -94,24 +84,40 @@ struct fs_sink
   
   bool pack(fb_serial_v1* out)
   {
-    if(!ofsx)
+    if(!_ofsx)
       return false;
     if(!out)
       return false;      
-    return serialize<serialize_write,std::ostream&>(&out,*ofsx);
+    return serialize<serial_write,ostream&>(&out,*_ofsx);
   }  
 
   //returns an object on the heap, for the caller to delete
   bool unpack (fb_serial_v1** out)  
   {
-    if(!ifs)
+    if(!_ifs)
       return false;
   
     if(!out)
       return false;
   
-    return serialize<serialize_read,std::istream&>(out,*ifs);
+    return serialize<serial_read,istream&>(out,*_ifs);
   }      
+  
+private:
+  // private because we are not inheriting from this class. If that changes, then
+  // the access specification can change at the same time, not before. 
+  void done();
+  ofstream* out_file();
+  stringstream* out_buf();
+  ofstream* in_file();
+  stringstream* in_buf();
+  
+  //data members
+  istream* _ifs;  
+  ostream* _ofsx;      
+  char* _buf;
+  size_t _len;
+  bool _pack;
 };
 
 #endif /* fs_sink_hpp */

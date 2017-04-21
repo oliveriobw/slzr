@@ -1,6 +1,6 @@
 //
 //  serial_types.cpp
-//  serializer
+//  serial
 //
 //  Created by B Wigley on 12/04/2017.
 //  Copyright © 2017 fab. All rights reserved.
@@ -11,7 +11,17 @@
 #include "app_types.h"
 #include <assert.h>
 
-template<typename T> fb_serial_v1 * create_inst() { return new T; }
+using namespace std;
+
+static map_type g_map;
+
+template<typename t> fb_serial_v1 * create_inst() {
+  return new t; 
+}
+
+template <typename t> void register_class(){
+  g_map[t::name()] = &create_inst<t>;  
+}
 
 /*
  * gets the static map of serializable types we support in this build
@@ -19,25 +29,24 @@ template<typename T> fb_serial_v1 * create_inst() { return new T; }
  * class instances 
  */
 map_type& serial_types::get_type_map()
-{
-  static map_type g_map;
-  
+{  
   // every type registered here needs a unique name which is used to map
   // it to the appropriate constructor
-  g_map[gps_position::name()] = &create_inst<gps_position>;
-  g_map[text_im::name()] = &create_inst<text_im>;  
-  g_map[compound_type::name()] = &create_inst<compound_type>;  
-  g_map[list_type::name()] = &create_inst<list_type>;  
-  g_map[types_test::name()] = &create_inst<types_test>;  
+  register_class<gps_position>();
+  register_class<text_im>();
+  register_class<compound_type>();
+  register_class<list_type>();
+  register_class<types_test>();
+  register_class<coords>();
   
   return g_map;    
 }
 
-fb_serial_v1* serial_types::create(std::string& name)
+fb_serial_v1* serial_types::create(string& name)
 {
   static map_type& m = serial_types::get_type_map();
   
-  std::map<std::string, fb_serial_v1*(*)()>::iterator it = m.find(name.c_str());
+  map<string, fb_serial_v1*(*)()>::iterator it = m.find(name.c_str());
   if(it == m.end())
   {
     assert(0);   //register your new type first

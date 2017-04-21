@@ -17,11 +17,11 @@
   The reader/writer classes need to implement these methods for
   supporting intrinsic types.  
  */
-struct sink
+struct serial
 {
   typedef uint32_t size_type;
 
-  sink():data_sz_pos(INVALID_DATA_SZ_POS){}
+  serial():data_sz_pos(INVALID_DATA_SZ_POS){}
 
   virtual size_type serialize( uint8_t& value)=0;
   virtual size_type serialize( uint16_t& value)=0;

@@ -27,7 +27,6 @@
 /* Begin PBXFileReference section */
 		C50EDAA61E9BB95C0006A818 /* serrializer */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = serrializer; sourceTree = BUILT_PRODUCTS_DIR; };
 		C50EDAA91E9BB95C0006A818 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
-		C50EDAB41E9BBA9A0006A818 /* machine.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = machine.h; sourceTree = "<group>"; };
 		C50EDAB51E9E27A70006A818 /* app_types.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = app_types.h; sourceTree = "<group>"; };
 		C50EDAB61E9E27DD0006A818 /* fs_sink.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = fs_sink.cpp; sourceTree = "<group>"; };
 		C50EDAB71E9E27DD0006A818 /* fs_sink.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = fs_sink.hpp; sourceTree = "<group>"; };
@@ -70,7 +69,6 @@
 			isa = PBXGroup;
 			children = (
 				C50EDAA91E9BB95C0006A818 /* main.cpp */,
-				C50EDAB41E9BBA9A0006A818 /* machine.h */,
 				C50EDAB51E9E27A70006A818 /* app_types.h */,
 				C50EDAB61E9E27DD0006A818 /* fs_sink.cpp */,
 				C50EDAB71E9E27DD0006A818 /* fs_sink.hpp */,

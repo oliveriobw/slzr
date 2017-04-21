@@ -19,20 +19,20 @@
  */
 struct text_im : public fb_serial_v1
 {
-    //config for this class
+  //config for this class
   static std::string name() { return "text_im";}
   static uint16_t version() { return 1; }
   
-    //custom payload
+  //custom payload
   std::string _message;
   
-    //constructors
+  //constructors
   text_im():fb_serial_v1(text_im::version(),text_im::name()){}  
   text_im(std::string message) : _message(message),fb_serial_v1(text_im::version(),text_im::name()){}
   ~text_im(){}
   
-    // serilisation of custom data using sink class methods
-  uint32_t serialize_payload(class sink& s) 
+  // serilisation of custom data using serial class methods
+  uint32_t serialize_payload(class serial& s) 
   {
     uint16_t len = _message.length();
     uint32_t done = s.serialize(_message,len);
@@ -71,7 +71,7 @@ struct gps_position : public fb_serial_v1
     return utf8_classname;
   }
   
-  uint32_t serialize_payload(class sink& s) 
+  uint32_t serialize_payload(class serial& s) 
   {
     uint32_t type_size=
       sizeof  degrees +
@@ -117,14 +117,9 @@ struct compound_type : public fb_serial_v1
   gps_position pos;
   text_im im;  
   
-  compound_type():fb_serial_v1(compound_type::version(),compound_type::name()){
-    pos.minutes=33;
-    pos.seconds=3.3;
-    pos.degrees=8;
-    im._message="hi people";
-  }  
+  compound_type():fb_serial_v1(compound_type::version(),compound_type::name()){}  
   
-  uint32_t serialize_payload(class sink& s) 
+  uint32_t serialize_payload(class serial& s) 
   {
     uint32_t done = 0;
     
@@ -157,7 +152,7 @@ struct list_type : public fb_serial_v1
   /**
    * demonstrates the linked-list scenario
    */
-  uint32_t serialize_payload(class sink& s) 
+  uint32_t serialize_payload(class serial& s) 
   {
     uint32_t done = 0;
     
@@ -177,7 +172,6 @@ struct list_type : public fb_serial_v1
     {
       done += (*it)->serialize_payload(s);      
     }
-    
     
     return done;
   }    
@@ -206,8 +200,8 @@ struct types_test : public fb_serial_v1
   types_test():fb_serial_v1(types_test::version(),types_test::name()){}  
   types_test(std::string message) : fb_serial_v1(types_test::version(),types_test::name()){}
   
-    // serilisation of custom data using sink class methods
-  uint32_t serialize_payload(class sink& s) 
+    // serilisation of custom data using serial class methods
+  uint32_t serialize_payload(class serial& s) 
   {
     uint32_t done = 0;
     done += s.serialize((uint8_t&)a);
@@ -221,5 +215,28 @@ struct types_test : public fb_serial_v1
     return done;
   }    
 };
+
+struct coords : public fb_serial_v1
+{
+  //config for this class
+  static std::string name() { return "coords";}
+  static uint16_t version() { return 1; }
+  
+  //custom payload
+  float _lat,_lng;
+  
+  //constructors
+  coords():fb_serial_v1(coords::version(),coords::name()){}  
+  
+  // serilisation of custom data using serial class methods
+  uint32_t serialize_payload(class serial& s) 
+  {
+    uint32_t done = 0;
+    done += s.serialize(_lat);
+    done += s.serialize(_lng);
+    return done;
+  }    
+};
+
 
 #endif /* app_types_h */

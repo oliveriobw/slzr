@@ -1,5 +1,5 @@
 //
-//  serialize_read.h
+//  serial_read.h
 //  serrializer
 //
 //  Created by B Wigley on 12/04/2017.
@@ -11,10 +11,10 @@
 
 #include "serialize.h"
 
-struct serialize_read  : public sink{
+struct serial_read  : public serial{
     
   //memory buffer or file  
-  serialize_read(std::istream& ifs):_ifs(ifs){}
+  serial_read(std::istream& ifs):_ifs(ifs){}
   
   std::istream& _ifs;
 

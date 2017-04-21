@@ -1,5 +1,5 @@
 //
-//  serialize_write.h
+//  serial_write.h
 //  serrializer
 //
 //  Created by B Wigley on 12/04/2017.
@@ -11,10 +11,10 @@
 
 #include "serialize.h"
 
-struct serialize_write : public sink
+struct serial_write : public serial
 {    
   //memory buffer or file  
-  serialize_write(std::ostream& ofs):_ofs(ofs){}
+  serial_write(std::ostream& ofs):_ofs(ofs){}
   
   std::ostream& _ofs;
   
