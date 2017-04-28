@@ -15,7 +15,7 @@
 //
 
 #include "app_types.h"
-#include "fs_sink.hpp"
+#include "sink.hpp"
 #include <fstream>
 #include <sstream>
 
@@ -30,12 +30,12 @@ int main(int argc, const char * argv[])
     g._lat = -10.67;
     g._lng = 53.3456;
   
-    fs_sink oa(file,true);    //archive file
+    sink oa(file,true);    //archive file
     oa.pack(&g);            //persist to file
   
     //restore data
     fb_serial_v1* fb = NULL;
-    fs_sink input(file,false);
+    sink input(file,false);
     input.unpack(&fb);        
     coords* b = dynamic_cast<coords*>(fb);
     assert(b);
@@ -45,22 +45,17 @@ int main(int argc, const char * argv[])
   }
   
   {
-    //the buffers could be larger in some instances but not here
-    const int bufsz = sizeof(coords); 
-    char buffer[bufsz];
-    memset(buffer,'v',bufsz);
-  
     coords g;
     g._lat = -34.67;
     g._lng = 65.3456;
   
-    //pack into buffer
-    fs_sink net_stream(buffer,bufsz,true);
+    //pack into internally managed buffer
+    sink net_stream;
     net_stream.pack(&g);
   
     //decode buffer into type:
     fb_serial_v1* fb = NULL;
-    fs_sink net_stream_in(buffer,bufsz,false);    
+    sink net_stream_in(net_stream.data());    
     net_stream_in.unpack(&fb);        
   
     coords* b = dynamic_cast<coords*>(fb);
@@ -80,12 +75,12 @@ int main(int argc, const char * argv[])
     g.random_buf[0] = 'a';
     g.random_buf[1] = 'b';
     g.random_buf[9] = 'c'; //ensures nulls are ignored
-    fs_sink oa(file,true);
+    sink oa(file,true);
     oa.pack(&g); 
     
       //recover
     fb_serial_v1* fb = NULL;
-    fs_sink input(file,false);
+    sink input(file,false);
     input.unpack(&fb);        
     gps_position* b = dynamic_cast<gps_position*>(fb);
     assert(b);
@@ -102,12 +97,12 @@ int main(int argc, const char * argv[])
   {
     //serialize
     text_im g("12345");
-    fs_sink oa(file,true);
+    sink oa(file,true);
     oa.pack(&g);
     
     //deserialize
     fb_serial_v1* fb = NULL;
-    fs_sink input(file,false);
+    sink input(file,false);
     input.unpack(&fb);        
     text_im* b = dynamic_cast<text_im*>(fb);
     assert(b);
@@ -121,11 +116,6 @@ int main(int argc, const char * argv[])
   
   {
     //using memory buffers not files
-    const int bufsz=100;
-    char buffer[bufsz];
-    memset(buffer,'v',bufsz);
-    char buffer2[bufsz];
-    memset(buffer2,'v',bufsz);
 
     //unpack two types with one serial instance
     const char* cstr = "12345678910 this is the day my life will surely ...";
@@ -135,16 +125,16 @@ int main(int argc, const char * argv[])
     gps.random_buf[1] = 'b';
     gps.random_buf[9] = 'c';
     
-    //memory buffer / network stream example
-    fs_sink net_stream(buffer,bufsz,true);
+    //pack into internally managed buffer
+    sink net_stream;
     net_stream.pack(&g);
 
-    fs_sink net_stream2(buffer2,bufsz,true);
+    sink net_stream2;
     net_stream2.pack(&gps);
     
     //decode incoming buffers:
     fb_serial_v1* fb = NULL;
-    fs_sink net_stream_in(buffer,bufsz,false);    
+    sink net_stream_in(net_stream.data());    
     net_stream_in.unpack(&fb);        
 
     //two ways to establish the decoded type:
@@ -166,6 +156,7 @@ int main(int argc, const char * argv[])
     delete fb;
     fb = NULL;
 
+#if 0
     //supply a new input stream of packed data
     net_stream_in.set_buf(buffer2,bufsz);
     net_stream_in.unpack(&fb);        
@@ -180,6 +171,8 @@ int main(int argc, const char * argv[])
     
       delete bg;
     }
+#endif
+  
   }
 
   {
@@ -190,12 +183,12 @@ int main(int argc, const char * argv[])
     g.pos.degrees=8;
     g.im._message="hi people";
   
-    fs_sink oa(file,true);
+    sink oa(file,true);
     oa.pack(&g);
     
     //deserialize
     fb_serial_v1* fb = NULL;
-    fs_sink input(file,false);
+    sink input(file,false);
     input.unpack(&fb);        
     compound_type* b = dynamic_cast<compound_type*>(fb);
     assert(b);
@@ -219,11 +212,11 @@ int main(int argc, const char * argv[])
     l.list.push_back(a);
     l.list.push_back(b);
   
-    fs_sink oa(file,true);
+    sink oa(file,true);
     oa.pack(&l); 
     
     fb_serial_v1* fb = NULL;
-    fs_sink input(file,false);
+    sink input(file,false);
     input.unpack(&fb);        
     list_type* d = dynamic_cast<list_type*>(fb);
     assert(d);
@@ -242,11 +235,6 @@ int main(int argc, const char * argv[])
   {
     //all native types tests (max values)
 
-    //the buffers could be larger in some instances but not here
-    const int bufsz = sizeof(types_test); 
-    char buffer[bufsz];
-    memset(buffer,'v',bufsz);
-    
     types_test g;
     g.a = INT8_MAX;
     g.b = INT16_MAX;
@@ -257,13 +245,13 @@ int main(int argc, const char * argv[])
     g.ud = UINT32_MAX;
     g.ue = UINT64_MAX;
     
-    //pack into buffer
-    fs_sink net_stream(buffer,bufsz,true);
+    //pack into internally managed buffer
+    sink net_stream;
     net_stream.pack(&g);
         
     //decode buffer into type:
     fb_serial_v1* fb = NULL;
-    fs_sink net_stream_in(buffer,bufsz,false);    
+    sink net_stream_in(net_stream.data());    
     net_stream_in.unpack(&fb);        
     
     types_test* b = dynamic_cast<types_test*>(fb);
@@ -286,12 +274,7 @@ int main(int argc, const char * argv[])
   
   {
     //all native types tests (minimum values)
-  
-    //the buffers could be larger in some instances but not here
-    const int bufsz = sizeof(types_test); 
-    char buffer[bufsz];
-    memset(buffer,'v',bufsz);
-    
+      
     types_test g;
     g.a = INT8_MIN;
     g.b = INT16_MIN;
@@ -302,13 +285,13 @@ int main(int argc, const char * argv[])
     g.ud = 0;
     g.ue = 0;
     
-    //pack into buffer
-    fs_sink net_stream(buffer,bufsz,true);
+    //pack into internally managed buffer
+    sink net_stream;
     net_stream.pack(&g);
     
     //decode buffer into type:
     fb_serial_v1* fb = NULL;
-    fs_sink net_stream_in(buffer,bufsz,false);    
+    sink net_stream_in(net_stream.data());    
     net_stream_in.unpack(&fb);        
     
     types_test* b = dynamic_cast<types_test*>(fb);
@@ -328,7 +311,40 @@ int main(int argc, const char * argv[])
     }
   }  
   
-  cout << "success: 9 tests completed" << endl;
+  
+  {
+    //using memory buffers not files => base 64 usage
+    //unpack two types with one serial instance
+    const char* cstr = "12345678910 this is the day my life will surely ...";
+    text_im g(cstr);
+    string tmp = g.tob64();
+    
+    //decode incoming b64 buffer into one of your types:
+    fb_serial_v1* fb = NULL;
+    sink net_stream_in(tmp);    
+    net_stream_in.unpack(&fb);        
+  
+    //two ways to establish the decoded type:
+    text_im* b = dynamic_cast<text_im*>(fb);
+    assert(b);
+    if(b)
+    {
+      assert(b->_message==cstr);
+      cout << "decoded text_im instance:" << b->_message << endl;
+    }
+  
+    //if we don't have rtti
+    if(fb->_hdr._class_name==text_im::name())
+    {
+      b = (text_im*)fb;
+      assert(b->_message==cstr);
+      cout << "decoded text_im instance:" << b->_message << endl;
+    }
+    delete fb;
+    fb = NULL;  
+  }
+  
+  cout << "success: all tests completed" << endl;
   
   return 0;
 }

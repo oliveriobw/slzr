@@ -103,11 +103,14 @@ struct fb_serial_v1{
   {
     serial.serialize_data_size_init();
     uint32_t size = serialize_payload(serial);
-    serial.serialize_data_size(size);
+    size += serial.serialize_data_size(size);
     return size;
     
   }
-
+  
+  //packs into base64
+  std::string& tob64();
+  
   protected:
   
   // classes are to implement their own data members' serialisation using
@@ -117,6 +120,7 @@ struct fb_serial_v1{
   // Must return size or data written/read
   virtual uint32_t serialize_payload(struct serial& serial) = 0;
 
+  std::string b64;
 };
 
 

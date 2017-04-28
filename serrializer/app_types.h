@@ -38,6 +38,7 @@ struct text_im : public fb_serial_v1
     uint32_t done = s.serialize(_message,len);
     return done;
   }    
+    
 };
 
 /*

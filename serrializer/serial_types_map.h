@@ -9,6 +9,9 @@
 #ifndef serial_types_map_h
 #define serial_types_map_h
 
+#include <map>
+#include "serial_types_common.hpp"
+
 typedef std::map<std::string, fb_serial_v1*(*)()> map_type;
 
 struct serial_types 
