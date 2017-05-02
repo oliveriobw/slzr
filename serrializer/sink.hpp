@@ -108,15 +108,15 @@ struct sink
   }  
 
   //returns an object on the heap, for the caller to delete
-  bool unpack (fb_serial_v1** out)  
+  std::unique_ptr<fb_serial_v1> unpack()  
   {
     if(!_ifs)
-      return false;
+      return NULL;
+    
+    fb_serial_v1* p = NULL;
+    serialize<serial_read,istream&>(&p,*_ifs);
   
-    if(!out)
-      return false;
-  
-    return serialize<serial_read,istream&>(out,*_ifs);
+    return std::unique_ptr<fb_serial_v1>(p);
   }      
   
 private:
