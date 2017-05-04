@@ -71,6 +71,9 @@ int main(int argc, const char * argv[])
     g.random_buf[0] = 'a';
     g.random_buf[1] = 'b';
     g.random_buf[9] = 'c'; //ensures nulls are ignored
+    g.random_data();
+    g.print();
+  
     sink oa(file,true);
     oa.pack(&g); 
     
@@ -85,6 +88,8 @@ int main(int argc, const char * argv[])
       assert(b->random_buf[0]=='a');
       assert(b->random_buf[1]=='b');
       assert(b->random_buf[9]=='c');
+      for(int c=0;c< g.buf.size();c++)
+         assert(g.buf[c] == b->buf[c]);
     }
   }
   

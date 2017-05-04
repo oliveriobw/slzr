@@ -12,6 +12,9 @@
 #include "serial_types_common.hpp"
 #include "serialize.h"
 #include <vector>
+#include <fstream>
+#include <sstream>
+#include <iostream>
 
 /*
  IM Text coords class
@@ -59,6 +62,8 @@ struct gps_position : public fb_serial_v1
   //demonstrates using fixed size buffer
   uint8_t random_buf[bufsz];
   
+  std::vector<uint8_t> buf;
+  
   //constructors
   gps_position():fb_serial_v1(2,gps_position::name()){}  
   gps_position(int d, int m, float s) :  degrees(d), minutes(m), 
@@ -103,10 +108,28 @@ struct gps_position : public fb_serial_v1
   
     uint32_t sz = bufsz;
     done += s.serialize((uint8_t*)random_buf,sz);
-  
+
+    done += s.serialize(buf);
+
     return done;
   }  
-  
+
+  void random_data(){
+    int len = 20;
+    buf.resize(len);
+    for(int c=0;c<len;c++)
+    {
+      int r = rand();
+      buf[c] = (uint8_t)r;
+    }
+  }
+
+  void print(){
+    std::cout << "buf=";
+    for(int c=0;c<buf.size();c++)
+      std::cout <<  std::bitset<32>(buf[c]) << std::endl;
+    std::cout << std::endl;
+  }
 };
 
 struct compound_type : public fb_serial_v1

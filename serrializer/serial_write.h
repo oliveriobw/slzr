@@ -10,6 +10,7 @@
 #define serialize_write_h
 
 #include "serialize.h"
+#include <vector>
 
 struct serial_write : public serial
 {    
@@ -111,6 +112,22 @@ struct serial_write : public serial
     return ((size_type)(newp-p)) + (size_type)sizeof len;  
   }
 
+  /**
+   * variable buffers
+   */
+  size_type serialize(std::vector<uint8_t>& buf)
+  {
+    uint32_t len = (uint32_t)buf.size();
+    serialize(len);
+    std::ostream::pos_type p = _ofs.tellp();
+    _ofs.write((const char*)&buf[0],len);
+    std::ostream::pos_type newp = _ofs.tellp();
+    //  std::cout << "wrote=\"" << value << "\"" << std::endl; //warn: treats it as string
+    assert((newp-p) == len);
+    return ((size_type)(newp-p)) + (size_type)sizeof len;  
+  }  
+  
+  
 #else
 
   virtual size_type serialize(uint8_t& value)
