@@ -38,7 +38,7 @@ struct sink
 {  
   //memory buffer or file based packing/unpacking
   sink(data_t* d); //read from memory buffer
-  sink(std::string& base_64); //read from b64 
+  sink(const std::string& base_64); //read from b64 
   sink();     //write to memory buffer
   
   sink(const char* file, bool pack = false);  
@@ -80,7 +80,7 @@ struct sink
     sz += r.serialize(header._class_name,header._class_name_sz);
     
     fb_serial_v1* p = NULL;
-    if(SerializeType::unarchiver())
+    if(r.unarchiver())
     {
       //create instance of unserializing out type
       p = serial_types::create(header._class_name);

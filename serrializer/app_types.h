@@ -162,7 +162,7 @@ struct list_type : public fb_serial_v1
     std::vector<text_im*>::size_type  list_size = list.size();
     done += s.serialize((uint32_t&)list_size);
     
-    if(list.size()==0 && list_size>0)
+    if(list_size>0 && s.unarchiver())
     {
       for(int c=0;c<list_size;++c)
         list.push_back(new text_im());

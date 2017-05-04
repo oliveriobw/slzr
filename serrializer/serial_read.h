@@ -191,7 +191,7 @@ struct serial_read  : public serial{
     return size == data_size;
   }
 
-  static bool unarchiver(){ return true;}
+  virtual bool  unarchiver(){ return true;}
 
   protected:
   size_type data_size;

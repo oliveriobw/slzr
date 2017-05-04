@@ -30,6 +30,7 @@ struct serial
   virtual size_type serialize( float& value)=0;
   virtual size_type serialize( uint8_t* value, uint32_t& sz)=0;
   virtual size_type serialize( std::string& value, uint16_t& len)=0;
+  virtual bool  unarchiver()=0;
 
   virtual void serialize_data_size_init()=0;
   virtual uint32_t serialize_data_size(const size_type size)=0;

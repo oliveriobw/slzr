@@ -26,7 +26,7 @@ sink::sink(data_t* d):_ofsx(NULL),_ifs(NULL),_pack(false)
 /**
  * Prepares internal buffer for b64 unpacking
  */
-sink::sink(std::string& base64):_ofsx(NULL),_ifs(NULL),_pack(false)
+sink::sink(const std::string& base64):_ofsx(NULL),_ifs(NULL),_pack(false)
 {
   string base64_src = base64_decode(base64);
   if(base64_src.size()>0)

@@ -218,7 +218,7 @@ struct serial_write : public serial
     return true;
   }
     
-  static bool unarchiver(){ return false; }  
+  virtual bool  unarchiver(){ return false;}
 };
 
 
