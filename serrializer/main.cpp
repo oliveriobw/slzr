@@ -208,6 +208,11 @@ int main(int argc, const char * argv[])
     text_im* b = new text_im("world");
     l.list.push_back(a);
     l.list.push_back(b);
+
+    text_im* va = new text_im("hello vec");
+    text_im* vb = new text_im("world vec");
+    l.vec.push_back(va);
+    l.vec.push_back(vb);
   
     sink oa(file,true);
     oa.pack(&l); 
@@ -218,10 +223,18 @@ int main(int argc, const char * argv[])
     assert(d);
     if(d)
     {
-      vector<text_im*>::iterator it = d->list.begin();
+      assert(d->vec.size()==2);
+      assert(d->list.size()==2);
+      list<text_im*>::iterator it = d->list.begin();
       for(;it!=d->list.end();++it)
       {
         cout << "decoded list_type instance:" << (*it)->_message << endl;
+      }    
+
+      vector<text_im*>::iterator vit = d->vec.begin();
+      for(;vit!=d->vec.end();++vit)
+      {
+        cout << "decoded list_type instance:" << (*vit)->_message << endl;
       }    
     }
   }

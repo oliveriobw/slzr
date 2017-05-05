@@ -200,7 +200,7 @@ struct serial_read  : public serial{
     }    
     
     value = std::string(buffer);
-  std::cout << "read " << len << " bytes="  << value << std::endl;//nb: as string
+    std::cout << "read " << len << " bytes="  << value << std::endl;//nb: as string
     
     return len;  
   }

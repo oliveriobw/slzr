@@ -11,6 +11,7 @@
 
 #include <string>
 #include <vector>
+#include <list>
 
 #define INVALID_DATA_SZ_POS (0)
 
@@ -42,5 +43,56 @@ struct serial
   protected:
   size_t data_sz_pos;
 };
+
+//template helpers
+
+
+
+template <class t,class container>
+uint32_t _serialize(class serial& s,container& list){
+  uint32_t done = 0;
+  
+  // the count of instances must be serialized first - even if it's not an 
+  // explicit data member as in this class 
+  typename container::size_type list_size = list.size();
+  done += s.serialize((uint32_t&)list_size);
+
+  if(list_size>0 && s.unarchiver())
+  {
+    for(int c=0;c<list_size;++c)
+      list.push_back(new t());
+  }
+  
+  typename container::iterator it = list.begin();
+  for(;it!=list.end();++it)
+  {
+    done += (*it)->serialize_payload(s);      
+  }
+  
+  return done;
+}
+
+/**
+ * when deserializing this has the side-effrect of allocating on the heap new 
+ * instances in the list
+ */
+template <class t>
+uint32_t serialize(class serial& s,std::vector<t*>& list){
+  return ::_serialize<t>(s,list);
+}    
+
+/**
+ * when deserializing this has the side-effrect of allocating on the heap new 
+ * instances in the list
+ */
+template <class t>
+uint32_t serialize(class serial& s,std::list<t*>& list){
+  return ::_serialize<t>(s,list);
+}    
+
+
+
+
+
 
 #endif /* serialize_h */

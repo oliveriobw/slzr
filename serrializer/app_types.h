@@ -12,6 +12,7 @@
 #include "serial_types_common.hpp"
 #include "serialize.h"
 #include <vector>
+#include <list>
 #include <fstream>
 #include <sstream>
 #include <iostream>
@@ -172,15 +173,20 @@ struct list_type : public fb_serial_v1
   static std::string name() { return "list_type";}
   static uint16_t version() { return 1; }
   
-  std::vector<text_im*> list;
+  std::vector<text_im*> vec;
+  std::list<text_im*> list;
   
   list_type():fb_serial_v1(list_type::version(),list_type::name()){}
   ~list_type()
   {
-    std::vector<text_im*>::iterator it = list.begin();
-    for( ; it!=list.end() ; ++it) {
+    std::vector<text_im*>::iterator it = vec.begin();
+    for( ; it!=vec.end() ; ++it) {
       delete (*it);
     }
+  std::list<text_im*>::iterator lit = list.begin();
+  for( ; lit!=list.end() ; ++lit) {
+    delete (*lit);
+  }
   }  
   
   /**
@@ -188,25 +194,8 @@ struct list_type : public fb_serial_v1
    */
   uint32_t serialize_payload(class serial& s) 
   {
-    uint32_t done = 0;
-    
-    // the count of instances must be serialized first - even if it's not an 
-    // explicit data member as in this class 
-    std::vector<text_im*>::size_type  list_size = list.size();
-    done += s.serialize((uint32_t&)list_size);
-    
-    if(list_size>0 && s.unarchiver())
-    {
-      for(int c=0;c<list_size;++c)
-        list.push_back(new text_im());
-    }
-    
-    std::vector<text_im*>::iterator it = list.begin();
-    for(;it!=list.end();++it)
-    {
-      done += (*it)->serialize_payload(s);      
-    }
-    
+    uint32_t done = ::serialize(s,list);
+    done += ::serialize(s,vec);
     return done;
   }    
 };

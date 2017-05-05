@@ -107,7 +107,6 @@ struct sink
     return serialize<serial_write,ostream&>(&out,*_ofsx);
   }  
 
-  //returns an object on the heap, for the caller to delete
   std::unique_ptr<fb_serial_v1> unpack()  
   {
     if(!_ifs)
