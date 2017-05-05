@@ -38,6 +38,7 @@ map_type& serial_types::get_type_map()
   register_class<list_type>();
   register_class<types_test>();
   register_class<coords>();
+  register_class<has_pointer>();
   
   return g_map;    
 }

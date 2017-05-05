@@ -158,7 +158,7 @@ struct compound_type : public fb_serial_v1
   {
     uint32_t done = 0;
     
-      //here we have some nested ojects to serialize
+    //here we have some nested ojects to serialize
     done += pos.serialize_payload(s);
     done += im.serialize_payload(s);
     
@@ -177,16 +177,12 @@ struct list_type : public fb_serial_v1
   std::list<text_im*> list;
   
   list_type():fb_serial_v1(list_type::version(),list_type::name()){}
-  ~list_type()
-  {
+  ~list_type() {
     std::vector<text_im*>::iterator it = vec.begin();
-    for( ; it!=vec.end() ; ++it) {
-      delete (*it);
-    }
-  std::list<text_im*>::iterator lit = list.begin();
-  for( ; lit!=list.end() ; ++lit) {
-    delete (*lit);
-  }
+    for( ; it!=vec.end() ; ++it) delete (*it);
+    
+    std::list<text_im*>::iterator lit = list.begin();
+    for( ; lit!=list.end() ; ++lit) delete (*lit);  
   }  
   
   /**
@@ -194,7 +190,8 @@ struct list_type : public fb_serial_v1
    */
   uint32_t serialize_payload(class serial& s) 
   {
-    uint32_t done = ::serialize(s,list);
+    uint32_t done = 0;
+    done += ::serialize(s,list);
     done += ::serialize(s,vec);
     return done;
   }    
@@ -261,5 +258,23 @@ struct coords : public fb_serial_v1
   }    
 };
 
+struct has_pointer : public fb_serial_v1
+{
+    //config for this class
+  static std::string name() { return "has_pointer";}
+  static uint16_t version() { return 1; }
+  
+  gps_position* p_pos;
+  
+  has_pointer():fb_serial_v1(has_pointer::version(),has_pointer::name()),p_pos(NULL){}
+  ~has_pointer(){ delete p_pos;}
+  
+  uint32_t serialize_payload(class serial& s)
+  {
+    uint32_t done = 0;
+    done += ::serialize(s,&p_pos);
+    return done;
+  }   
+};
 
 #endif /* app_types_h */

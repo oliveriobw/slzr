@@ -345,6 +345,51 @@ int main(int argc, const char * argv[])
     }
   }
   
+  {
+    //compound types
+    has_pointer g;
+    g.p_pos = new gps_position();
+    g.p_pos->minutes=33;
+    g.p_pos->seconds=3.3;
+    g.p_pos->degrees=8;
+  
+    sink oa(file,true);
+    oa.pack(&g);
+  
+    //deserialize
+    sink input(file,false);
+    std::unique_ptr<fb_serial_v1> fb = input.unpack();        
+    has_pointer* b = dynamic_cast<has_pointer*>(fb.get());
+    assert(b);
+    if(b)
+    {
+      assert(b->p_pos->minutes == g.p_pos->minutes);
+      assert(b->p_pos->seconds == g.p_pos->seconds);
+      assert(b->p_pos->degrees == g.p_pos->degrees);
+    }
+  }
+  
+  {
+    //compound types
+    has_pointer g;
+  
+    sink oa(file,true);
+    oa.pack(&g);
+  
+    //deserialize
+    sink input(file,false);
+    std::unique_ptr<fb_serial_v1> fb = input.unpack();        
+    has_pointer* b = dynamic_cast<has_pointer*>(fb.get());
+    assert(b);
+    if(b)
+    {
+      assert(b->p_pos == NULL);
+      assert(b->p_pos == g.p_pos);
+    }
+  }
+  
+  
+  
   cout << "success: all tests completed" << endl;
   
   return 0;

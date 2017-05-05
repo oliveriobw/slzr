@@ -90,8 +90,28 @@ uint32_t serialize(class serial& s,std::list<t*>& list){
   return ::_serialize<t>(s,list);
 }    
 
-
-
+/**
+ * serialise a pointer to a custom type
+ *
+ * when deserializing this has the side-effrect of allocating on the heap a 
+ * new instance (if present in the data buffer)
+ */
+template <class t>
+uint32_t serialize(class serial& s, t** pp_inst)
+{
+  uint8_t present = *pp_inst != NULL ? 1 : 0;
+  uint32_t done = s.serialize(present);    
+  if(present==1) 
+  {
+    if(s.unarchiver())
+    {
+        delete *pp_inst;
+        *pp_inst = new t();
+    }
+    done += (*pp_inst)->serialize_payload(s);
+  }
+  return done;
+}     
 
 
 
