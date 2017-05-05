@@ -162,8 +162,26 @@ struct serial_read  : public serial{
     }  
     return len;
   }
-  
-  
+
+  /**
+   * variable buffers
+   */
+  size_type serialize(std::vector<int8_t>& buf)
+  {
+    uint32_t len=0;
+    serialize(len);
+    if(len>0)
+    {
+      buf.resize(len);
+      _ifs.read((char*)&buf[0],len);
+      if (!_ifs)
+      {
+        std::cout << "error: only \"" << _ifs.gcount() << " bytes \" could be read";
+        return 0;
+      }    
+    }  
+    return len;
+  }
   
   //reads string size then string payload
   //treats incoming payload like a string - so zero terminated after unpacking  

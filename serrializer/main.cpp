@@ -88,8 +88,14 @@ int main(int argc, const char * argv[])
       assert(b->random_buf[0]=='a');
       assert(b->random_buf[1]=='b');
       assert(b->random_buf[9]=='c');
+      assert(g.buf.size() == b->buf.size());
       for(int c=0;c< g.buf.size();c++)
          assert(g.buf[c] == b->buf[c]);
+
+      assert(g.sbuf.size() == b->sbuf.size());
+      for(int c=0;c< g.sbuf.size();c++)
+        assert(g.sbuf[c] == b->sbuf[c]);
+
     }
   }
   

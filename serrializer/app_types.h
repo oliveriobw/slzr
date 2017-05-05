@@ -15,6 +15,7 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
+#include <time.h>
 
 /*
  IM Text coords class
@@ -63,6 +64,7 @@ struct gps_position : public fb_serial_v1
   uint8_t random_buf[bufsz];
   
   std::vector<uint8_t> buf;
+  std::vector<int8_t>  sbuf;
   
   //constructors
   gps_position():fb_serial_v1(2,gps_position::name()){}  
@@ -106,28 +108,36 @@ struct gps_position : public fb_serial_v1
     done += s.serialize((float&)    seconds);
     done += s.serialize((uint8_t&)  dummy_char);
   
+    //fixed size buffer
     uint32_t sz = bufsz;
     done += s.serialize((uint8_t*)random_buf,sz);
 
+    
     done += s.serialize(buf);
+    done += s.serialize(sbuf);
 
     return done;
   }  
 
   void random_data(){
-    int len = 20;
+    srand(time(NULL));
+    int len = 1200;
     buf.resize(len);
+    sbuf.resize(len);
     for(int c=0;c<len;c++)
     {
       int r = rand();
       buf[c] = (uint8_t)r;
+      sbuf[c] = (int8_t)r;
     }
   }
 
   void print(){
     std::cout << "buf=";
-    for(int c=0;c<buf.size();c++)
-      std::cout <<  std::bitset<32>(buf[c]) << std::endl;
+    for(int c=0;c<buf.size();c++) {
+      std::cout <<  std::bitset<8>(buf[c]) << std::endl;
+      std::cout <<  std::bitset<8>(sbuf[c]) << std::endl;
+    }
     std::cout << std::endl;
   }
 };
