@@ -39,15 +39,20 @@ map_type& serial_types::get_type_map()
   register_class<types_test>();
   register_class<coords>();
   register_class<has_pointer>();
-  
+  register_class<ax_state_msg>();
+  register_class<ax_pend_msg>();
+  register_class<ax_usr_state>();
+  register_class<app_serial_file>();
+  register_class<chat_serial>();
+    
   return g_map;    
 }
 
-fb_serial_v1* serial_types::create(string& name)
+fb_serial_v1* serial_types::create(fb_serial_header& cfg)
 {
   static map_type& m = serial_types::get_type_map();
   
-  map<string, fb_serial_v1*(*)()>::iterator it = m.find(name.c_str());
+  map<string, fb_serial_v1*(*)()>::iterator it = m.find(cfg._class_name.c_str());
   if(it == m.end())
   {
     assert(0);   //register your new type first

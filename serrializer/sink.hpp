@@ -22,13 +22,6 @@
 
 using namespace std;
 
-//utility POD type
-struct data_t{
-  data_t():_data(NULL),_len(0){}
-  char*    _data;
-  uint64_t _len;
-};
-
 /**
  * Sink class for buffers/files
  *
@@ -37,15 +30,16 @@ struct data_t{
 struct sink
 {  
   //memory buffer or file based packing/unpacking
-  sink(data_t* d); //read from memory buffer
-  sink(const std::string& base_64); //read from b64 
-  sink();     //write to memory buffer
+  sink(const char* file, bool pack = false); //file store - pack or unpack  
+                                             //  sink(data_t* d);                  //unpack from memory buffer
+  sink(std::vector<uint8_t>& d);                  //unpack from memory buffer
+  sink(const std::string& base_64); //unpack from b64 string 
+  sink();                           //write to memory buffer
   
-  sink(const char* file, bool pack = false);  
   ~sink();
   
-  data_t* data(){
-    return &_data;
+    std::vector<uint8_t>& data(){
+        return _data;
   }
   bool set_buf(char* buffer, int len);  
   
@@ -78,12 +72,13 @@ struct sink
     
     size_t sz = r.serialize(header._protocol_version);
     sz += r.serialize(header._class_name,header._class_name_sz);
-    
+    sz += r.serialize(header._class_version);
+
     fb_serial_v1* p = NULL;
     if(r.unarchiver())
     {
       //create instance of unserializing out type
-      p = serial_types::create(header._class_name);
+      p = serial_types::create(header);
       if(!p)
         return -1;
       
@@ -107,17 +102,47 @@ struct sink
     return serialize<serial_write,ostream&>(&out,*_ofsx);
   }  
 
-  std::unique_ptr<fb_serial_v1> unpack()  
+  /**
+   *
+   *  returns an object new-ed on the heap - the application
+   *  needs to delete it
+   *
+   */
+  fb_serial_v1* unpack()  
   {
     if(!_ifs)
       return NULL;
     
     fb_serial_v1* p = NULL;
     serialize<serial_read,istream&>(&p,*_ifs);
-  
-    return std::unique_ptr<fb_serial_v1>(p);
+
+    return p;
   }      
-  
+
+    /**
+     *
+     *  returns a shared object
+     *
+     */
+    template <class t>
+    std::shared_ptr<t> unpack()  
+    {
+        if(!_ifs)
+            return NULL;
+    
+        fb_serial_v1* b = NULL;
+        serialize<serial_read,istream&>(&b,*_ifs);
+        t* p = dynamic_cast<t*>(b);
+        if(p){
+            std::shared_ptr<t> a = std::make_shared<t>(*p);
+            delete p;    //we can free the original here
+            return a;
+        }
+    
+        return NULL;
+    }     
+    
+    
 private:
   // private because we are not inheriting from this class. If that changes, then
   // the access specification can change at the same time, not before. 
@@ -130,7 +155,7 @@ private:
   //data members
   istream* _ifs;  
   ostream* _ofsx;
-  data_t _data;
+  std::vector<uint8_t> _data;  // Because vector is guranteed to be contiguous in C++03
   bool _pack;
 };
 

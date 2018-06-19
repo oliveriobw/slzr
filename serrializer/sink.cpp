@@ -10,17 +10,19 @@
 #include <fstream>
 #include <sstream>
 #include "base64.h"
-
+#ifdef __ANDROID__
+#include <sys/endian.h>
+#endif
 using namespace std;
 
 /**
  * Prepares buffer for unpacking from data buffer
  */
-sink::sink(data_t* d):_ofsx(NULL),_ifs(NULL),_pack(false)
+sink::sink(std::vector<uint8_t>& d):_ofsx(NULL),_ifs(NULL),_pack(false)                  //unpack from memory buffer
 {
       _ifs = new stringstream(ios::in |ios::out| ifstream::binary);
       streambuf * pbuf = _ifs->rdbuf();
-      pbuf->sputn (d->_data,d->_len);
+      pbuf->sputn ((const char*)d.data(),d.size());
 }
 
 /**
@@ -31,17 +33,14 @@ sink::sink(const std::string& base64):_ofsx(NULL),_ifs(NULL),_pack(false)
   string base64_src = base64_decode(base64);
   if(base64_src.size()>0)
   {
-    _data._data= (char*)new unsigned char[base64_src.length()];
-    _data._len=base64_src.length();
-    for(int c=0;c<_data._len;++c)
-      _data._data[c]=base64_src[c];
+    for(int c=0;c<base64_src.size();++c)
+        _data.push_back(base64_src[c]);
   }
 
   _ifs = new stringstream(ios::in |ios::out| ifstream::binary);
   streambuf * pbuf = _ifs->rdbuf();
-
-  //pbuf->sputn (d->data,d->len);
-  pbuf->sputn (_data._data,_data._len);  
+    pbuf->sputn ((const char*)_data.data(),_data.size());
+    
 }
 
 /**
@@ -70,7 +69,6 @@ sink::sink(const char* file, bool pack):_ofsx(NULL),_ifs(NULL),_pack(pack)
 sink::~sink()
 {
   done();
-  delete []_data._data;  
   delete _ofsx;
   delete _ifs;   
 }
@@ -97,16 +95,16 @@ long sink::done()
     {
       buf->seekp(0, ios::end);
       stringstream::pos_type offset = buf->tellp();
-        _data._len = offset;
-        if(_data._len<1)
+    _data.resize(offset);
+        if(_data.size()<1)
           return buffer_sz_err;
           
-        _data._data = new char[_data._len];
         buf->seekg(0);
-        buf->read(_data._data,_data._len);
+
+        buf->read((char*)&_data[0],_data.size());
         long __sz = buf->gcount();
         cout << "closed serialised buffer" << endl;
-        if(__sz>_data._len)
+        if(__sz>_data.size())
           return buffer_sz_err;
     }    
   }

@@ -15,14 +15,37 @@
 //
 
 #include "app_types.h"
+
 #include "sink.hpp"
 #include <fstream>
 #include <sstream>
 
 using namespace std;
 
+struct a{
+    char* b;
+    a(){
+        b=new char[4];
+    }
+    ~a(){
+        delete b;
+    }
+    a(a&& p){
+        b=p.b;
+        p.b=nullptr;
+    }
+};
+
+#if defined IOS
+int test()
+#else
 int main(int argc, const char * argv[]) 
+#endif
 {
+    
+    a s;  
+    a d = std::move(s);
+    
   const char* file = "/tmp/test_data.bin";  
   
   {
@@ -35,11 +58,25 @@ int main(int argc, const char * argv[])
   
     //restore data
     sink input(file,false);
-    std::unique_ptr<fb_serial_v1> fb = input.unpack();        
-    coords* b = dynamic_cast<coords*>(fb.get());
+    fb_serial_v1* fb = input.unpack();        
+    coords* b = dynamic_cast<coords*>(fb);
     assert(b);
     assert(b->_lat == g._lat);
     assert(b->_lng == g._lng);
+  
+    //test repeat unpack
+    std::shared_ptr<coords> valid = input.unpack<coords>();    // new object
+    assert(valid);
+
+    std::shared_ptr<gps_position> invalid = input.unpack<gps_position>();    // new object
+    assert(!invalid);
+
+  std::shared_ptr<text_im> im = input.unpack<text_im>();    // new object
+  assert(!im);
+
+    valid = input.unpack<coords>();    // new object
+    assert(valid);
+
   }
   
   {
@@ -53,9 +90,9 @@ int main(int argc, const char * argv[])
   
     //decode buffer into type:
     sink input(net_stream.data());    
-    std::unique_ptr<fb_serial_v1> fb = input.unpack();        
+    fb_serial_v1* fb = input.unpack();        
  
-    coords* b = dynamic_cast<coords*>(fb.get());
+    coords* b = dynamic_cast<coords*>(fb);
     assert(b);
     if(b)
     {
@@ -79,8 +116,8 @@ int main(int argc, const char * argv[])
     
       //recover
     sink input(file,false);
-    std::unique_ptr<fb_serial_v1> fb = input.unpack();        
-    gps_position* b = dynamic_cast<gps_position*>(fb.get());
+    fb_serial_v1* fb = input.unpack();        
+    gps_position* b = dynamic_cast<gps_position*>(fb);
     assert(b);
     if(b)
     {
@@ -107,8 +144,8 @@ int main(int argc, const char * argv[])
     
     //deserialize
     sink input(file,false);
-    std::unique_ptr<fb_serial_v1> fb = input.unpack();        
-    text_im* b = dynamic_cast<text_im*>(fb.get());
+    fb_serial_v1* fb = input.unpack();        
+    text_im* b = dynamic_cast<text_im*>(fb);
     assert(b);
     if(b)
     {
@@ -137,10 +174,10 @@ int main(int argc, const char * argv[])
     
     //decode incoming buffers:
     sink input(net_stream.data());    
-    std::unique_ptr<fb_serial_v1> fb = input.unpack();        
+    fb_serial_v1* fb = input.unpack();        
 
     //two ways to establish the decoded type:
-    text_im* b = dynamic_cast<text_im*>(fb.get());
+    text_im* b = dynamic_cast<text_im*>(fb);
     assert(b);
     if(b)
     {
@@ -151,7 +188,7 @@ int main(int argc, const char * argv[])
     //if we don't have rtti
     if(fb->_hdr._class_name==text_im::name())
     {
-      b = (text_im*)fb.get();
+      b = (text_im*)fb;
       assert(b->_message==cstr);
       cout << "decoded text_im instance:" << b->_message << endl;
     }
@@ -161,7 +198,7 @@ int main(int argc, const char * argv[])
     //supply a new input stream of packed data
     input.set_buf(buffer2,bufsz);
     fb = input.unpack();        
-    gps_position* bg = dynamic_cast<gps_position*>(fb.get());
+    gps_position* bg = dynamic_cast<gps_position*>(fb);
     assert(bg);
     if(bg)
     {
@@ -187,8 +224,8 @@ int main(int argc, const char * argv[])
     
     //deserialize
     sink input(file,false);
-    std::unique_ptr<fb_serial_v1> fb = input.unpack();        
-    compound_type* b = dynamic_cast<compound_type*>(fb.get());
+    fb_serial_v1* fb = input.unpack();        
+    compound_type* b = dynamic_cast<compound_type*>(fb);
     assert(b);
     if(b)
     {
@@ -218,8 +255,8 @@ int main(int argc, const char * argv[])
     oa.pack(&l); 
     
     sink input(file,false);
-    std::unique_ptr<fb_serial_v1> fb = input.unpack();        
-    list_type* d = dynamic_cast<list_type*>(fb.get());
+    fb_serial_v1* fb = input.unpack();        
+    list_type* d = dynamic_cast<list_type*>(fb);
     assert(d);
     if(d)
     {
@@ -259,9 +296,9 @@ int main(int argc, const char * argv[])
         
     //decode buffer into type:
     sink input(net_stream.data());    
-    std::unique_ptr<fb_serial_v1> fb = input.unpack();        
+    fb_serial_v1* fb = input.unpack();        
     
-    types_test* b = dynamic_cast<types_test*>(fb.get());
+    types_test* b = dynamic_cast<types_test*>(fb);
     assert(b);
     if(b)
     {
@@ -297,9 +334,9 @@ int main(int argc, const char * argv[])
     
     //decode buffer into type:
     sink input(net_stream.data());    
-    std::unique_ptr<fb_serial_v1> fb = input.unpack();        
+    fb_serial_v1* fb = input.unpack();        
     
-    types_test* b = dynamic_cast<types_test*>(fb.get());
+    types_test* b = dynamic_cast<types_test*>(fb);
     assert(b);
     if(b)
     {
@@ -307,6 +344,7 @@ int main(int argc, const char * argv[])
       assert(b->b == INT16_MIN);
       assert(b->d == INT32_MIN);
       assert(b->e == INT64_MIN);
+    
       assert(b->ua == 0);
       assert(b->ub == 0);
       assert(b->ud == 0);
@@ -325,10 +363,10 @@ int main(int argc, const char * argv[])
     
     //decode incoming b64 buffer into one of your types:
     sink input(tmp);    
-    std::unique_ptr<fb_serial_v1> fb = input.unpack();        
+    fb_serial_v1* fb = input.unpack();        
   
     //two ways to establish the decoded type:
-    text_im* b = dynamic_cast<text_im*>(fb.get());
+    text_im* b = dynamic_cast<text_im*>(fb);
     assert(b);
     if(b)
     {
@@ -339,7 +377,7 @@ int main(int argc, const char * argv[])
     //if we don't have rtti
     if(fb->_hdr._class_name==text_im::name())
     {
-      b = (text_im*)fb.get();
+      b = (text_im*)fb;
       assert(b->_message==cstr);
       cout << "decoded text_im instance:" << b->_message << endl;
     }
@@ -358,8 +396,8 @@ int main(int argc, const char * argv[])
   
     //deserialize
     sink input(file,false);
-    std::unique_ptr<fb_serial_v1> fb = input.unpack();        
-    has_pointer* b = dynamic_cast<has_pointer*>(fb.get());
+    fb_serial_v1* fb = input.unpack();        
+    has_pointer* b = dynamic_cast<has_pointer*>(fb);
     assert(b);
     if(b)
     {
@@ -378,8 +416,8 @@ int main(int argc, const char * argv[])
   
     //deserialize
     sink input(file,false);
-    std::unique_ptr<fb_serial_v1> fb = input.unpack();        
-    has_pointer* b = dynamic_cast<has_pointer*>(fb.get());
+    fb_serial_v1* fb = input.unpack();        
+    has_pointer* b = dynamic_cast<has_pointer*>(fb);
     assert(b);
     if(b)
     {
@@ -387,9 +425,183 @@ int main(int argc, const char * argv[])
       assert(b->p_pos == g.p_pos);
     }
   }
+    
+    
+    {
+    //long types
+    ax_state_msg g;
+//    g.timestamps.push_back(time(NULL));
+//    g.timestamps.push_back(time(NULL)+100);
+//    g.timestamps.push_back(time(NULL)+1000);
+    
+    sink oa(file,true);
+    oa.pack(&g);
+    
+        //deserialize
+    sink input(file,false);
+    fb_serial_v1* fb = input.unpack();        
+    ax_state_msg* b = dynamic_cast<ax_state_msg*>(fb);
+    assert(b);
+    if(b)
+     {
+//     vector<uint64_t>::iterator i = g.timestamps.begin();
+//     for(int f=0;i!=g.timestamps.end();++i,++f)
+//         assert((*i)==b->timestamps[f]);
+     }
+    }
   
+
+    {
+        ax_usr_state g;
+        g.setup();    
+        sink oa(file,true);
+        oa.pack(&g);
+    
+        //deserialize
+        sink input(file,false);
+        fb_serial_v1* fb = input.unpack();        
+        ax_usr_state* b = dynamic_cast<ax_usr_state*>(fb);
+        assert(b);
+        if(b)
+        {
+        for(int f=0;f<32;++f){
+            assert(g.rk[f]==b->rk[f]);
+            assert(g.cks[f]==b->cks[f]);
+            assert(g.ckr[f]==b->ckr[f]);
+        }
+        assert(g.last_sent_keyrequest==b->last_sent_keyrequest);
+        assert(g.last_received_keyrequest==b->last_received_keyrequest);
+        }    
+    }
+
+    /**
+     *
+     *
+     *                   OBJECT SCOPE - unpack
+     * 
+     *
+     */
+    ax_usr_state* b = NULL;
+    ax_usr_state state;
+    {
+        vector<uint8_t> data;
+        state.setup();    
+        struct sink mem_sink;
+        long resut = mem_sink.pack(&state);
+        data = mem_sink.data();
+    
+        sink net_stream_in(data);
+        fb_serial_v1* fb = net_stream_in.unpack();    // new object
+        b = dynamic_cast<ax_usr_state*>(fb);
+        assert(b);
+    }
+    
+    {
+    if(b)
+    {
+        for(int f=0;f<32;++f){
+            assert(state.rk[f]==b->rk[f]);
+            assert(state.cks[f]==b->cks[f]);
+            assert(state.ckr[f]==b->ckr[f]);
+        }
+        assert(state.last_sent_keyrequest==b->last_sent_keyrequest);
+        assert(state.last_received_keyrequest==b->last_received_keyrequest);
+        delete b; //we need to clear it
+    }    
+    
+    }
+    
+    {
+        ax_usr_state* b = new ax_usr_state;
+        b->setup();    
+        struct sink mem_sink;
+        long resut = mem_sink.pack(b);
+    }
+    
+    
+    /**
+     *
+     *
+     *                   OBJECT SCOPE - unpack to shared_ptr
+     * 
+     *
+     */
+    std::shared_ptr<ax_usr_state> bshr;
+    {
+        vector<uint8_t> data;
+        state.setup();    
+        struct sink mem_sink;
+        long resut = mem_sink.pack(&state);
+        data = mem_sink.data();
+    
+        sink net_stream_in(data);
+    
+        //attempt unpack into invalid type
+        std::shared_ptr<has_pointer> wrong = net_stream_in.unpack<has_pointer>();    // new object
+        assert(!wrong);
+    
+        bshr = net_stream_in.unpack<ax_usr_state>();    // new object
+        assert(bshr);
+    }
+    
+    {
+    if(bshr)
+        {
+        for(int f=0;f<32;++f){
+            assert(state.rk[f]==bshr->rk[f]);
+            assert(state.cks[f]==bshr->cks[f]);
+            assert(state.ckr[f]==bshr->ckr[f]);
+        }
+        assert(state.last_sent_keyrequest==bshr->last_sent_keyrequest);
+        assert(state.last_received_keyrequest==bshr->last_received_keyrequest);
+        // delete b; //no need
+        }    
+    
+    }
+    
+    
+    //TEXT IM ATTACHMENT
+    {
+        //serialize
+        text_im g("12345");
+        app_serial_file fl;
+        fl.remote_filename_ = "/volume/plop";
+        g.file_ =     std::make_shared<app_serial_file>(fl);    
+        sink oa(file,true);
+        oa.pack(&g);
+    
+        //deserialize
+        sink input(file,false);
+        fb_serial_v1* fb = input.unpack();        
+        text_im* b = dynamic_cast<text_im*>(fb);
+        assert(b);
+        if(b)
+        {
+            assert(b->_message=="12345");
+            assert(b->file_.get()->remote_filename_=="/volume/plop");
+            cout << "decoded text_im instance:" << b->_message << endl;
+            delete b;
+        }    
+    }    
   
-  
+    
+    {    
+        //serialize
+        chat_serial g("stanza-id",chat_serial::echat_serial::echat_serial_decode_fail+4);
+        sink oa(file,true);
+        oa.pack(&g);
+    
+        //deserialize
+        sink input(file,false);
+        fb_serial_v1* fb = input.unpack();        
+        chat_serial* c = dynamic_cast<chat_serial*>(fb);
+        assert(c);
+        if(c)
+        {
+            assert(c->_event==chat_serial::echat_serial::echat_serial_decode_fail+4);
+            assert(c->_stanza_id == "stanza-id");
+        }  
+    }
   cout << "success: all tests completed" << endl;
   
   return 0;

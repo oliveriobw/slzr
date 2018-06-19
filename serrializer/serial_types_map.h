@@ -17,7 +17,8 @@ typedef std::map<std::string, fb_serial_v1*(*)()> map_type;
 struct serial_types 
 {
   static map_type& get_type_map();
-  static fb_serial_v1* create(std::string& name);
+  static fb_serial_v1* create(fb_serial_header& cfg);
+
 };
 
 

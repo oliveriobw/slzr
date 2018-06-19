@@ -1,4 +1,4 @@
-  //
+    //
   //  app_types.h
   //  serrializer
   //
@@ -9,6 +9,8 @@
 #ifndef app_types_h
 #define app_types_h
 
+#include <cinttypes>
+
 #include "serial_types_common.hpp"
 #include "serialize.h"
 #include <vector>
@@ -17,6 +19,37 @@
 #include <sstream>
 #include <iostream>
 #include <time.h>
+#include "chat_serial.h"
+
+struct app_serial_file : public fb_serial_v1
+{
+    //config for this class
+    static std::string name() { return "file"; }
+    static uint16_t version() { return 1; }
+    
+    //custom payload
+    std::string remote_filename_;
+    std::string filename_;
+    std::vector<uint8_t> encryption_key_;
+    
+    //constructors
+    app_serial_file():fb_serial_v1(app_serial_file::version(),app_serial_file::name()){}
+    
+    // serilisation of custom data using serial class methods
+    uint32_t serialize_payload(class serial& s)
+    {
+    uint16_t len = filename_.length();
+    uint32_t done = s.serialize(filename_, len);
+    
+    //need the remote location.
+    len = remote_filename_.length();
+    done += s.serialize(remote_filename_, len);
+    
+    done += s.serialize(encryption_key_);
+    return done;
+    }    
+};
+
 
 /*
  IM Text coords class
@@ -24,26 +57,39 @@
  */
 struct text_im : public fb_serial_v1
 {
-  //config for this class
-  static std::string name() { return "text_im";}
-  static uint16_t version() { return 1; }
-  
-  //custom payload
-  std::string _message;
-  
-  //constructors
-  text_im():fb_serial_v1(text_im::version(),text_im::name()){}  
-  text_im(std::string message) : _message(message),fb_serial_v1(text_im::version(),text_im::name()){}
-  ~text_im(){}
-  
-  // serilisation of custom data using serial class methods
-  uint32_t serialize_payload(class serial& s) 
-  {
+    //config for this class
+    static std::string name() { return "message";}
+    static uint16_t version() { return 1; }
+    
+    //custom payload
+    std::string _message;
+    
+    std::shared_ptr<app_serial_file> file_;
+    
+    //constructors
+    text_im():fb_serial_v1(text_im::version(),text_im::name()){}  
+    text_im(const std::string text) : _message(text),fb_serial_v1(text_im::version(),text_im::name()){}
+    
+    // serilisation of custom data using serial class methods
+    uint32_t serialize_payload(class serial& s) 
+    {
     uint16_t len = _message.length();
     uint32_t done = s.serialize(_message,len);
-    return done;
-  }    
     
+    uint8_t attachment_present = file_ != nullptr ? 1 : 0;
+    done += s.serialize(attachment_present);
+    
+    if(attachment_present==1 && s.unarchiver())
+    {
+    //      file_ = std::shared_ptr<app_serial_file>(new app_serial_file());
+    file_ = std::make_shared<app_serial_file>();
+    }
+    
+    if (file_)
+        done += file_->serialize_payload(s);
+    
+    return done;
+    }    
 };
 
 /*
@@ -166,7 +212,7 @@ struct compound_type : public fb_serial_v1
   }    
 };
 
-
+// stl containers of supported types
 struct list_type : public fb_serial_v1
 {
     //config for this class
@@ -258,13 +304,14 @@ struct coords : public fb_serial_v1
   }    
 };
 
+//optional point to another supported type 
 struct has_pointer : public fb_serial_v1
 {
-    //config for this class
+  //config for this class
   static std::string name() { return "has_pointer";}
   static uint16_t version() { return 1; }
   
-  gps_position* p_pos;
+  gps_position* p_pos; 
   
   has_pointer():fb_serial_v1(has_pointer::version(),has_pointer::name()),p_pos(NULL){}
   ~has_pointer(){ delete p_pos;}
@@ -277,4 +324,123 @@ struct has_pointer : public fb_serial_v1
   }   
 };
 
+
+
+
+/*
+ * Axolotl state msg type
+ */
+struct ax_state_msg : public fb_serial_v1
+{
+    static std::string name() { return "ax_state_msg";}
+    static uint16_t version() { return 1; }
+    
+    std::vector<uint8_t> skipped_mks;
+    //std::vector<uint64_t> timestamps;
+    
+    ax_state_msg():fb_serial_v1(ax_state_msg::version(),ax_state_msg::name()){}  
+    
+    uint32_t serialize_payload(class serial& s) 
+    {
+    uint32_t done = 0;
+    done += s.serialize(skipped_mks);
+    // done += s.serialize(timestamps);
+    return done;
+    }    
+};
+
+struct ax_pend_msg : public fb_serial_v1
+{
+    static std::string name() { return "ax_pend_msg";}
+    static uint16_t version() { return 1; }
+        
+    ax_pend_msg():fb_serial_v1(ax_pend_msg::version(),ax_pend_msg::name()){}  
+    
+    std::string _message;
+    
+    uint32_t serialize_payload(class serial& s) 
+    {
+        return s.serialize(_message);
+    }    
+};
+
+/*
+ * Axolotl state type
+ */
+#define KEY_SZ 32
+struct ax_usr_state : public fb_serial_v1
+{
+    static std::string name() { return "ax_state";}
+    static uint16_t version() { return 1; }
+        
+    uint8_t  rk[KEY_SZ];
+    uint8_t  cks[KEY_SZ];
+    uint8_t  ckr[KEY_SZ];
+    uint8_t  dhir[KEY_SZ];
+    uint8_t  dhrs[KEY_SZ];
+    uint8_t  dhrspub[KEY_SZ];
+    uint8_t  dhrr[KEY_SZ];
+    uint16_t ns;
+    uint16_t nr;
+    uint16_t pns;
+    uint8_t  ratchet_flag;
+    uint8_t  zrtpverified; // 0 if dhir is unverified, 1 if dhir is verified
+    uint8_t  status;       // enum AxolotlStatus 
+    uint8_t  pending;      // number of pending messages
+
+    std::string   last_sent_keyrequest;
+    std::string   last_received_keyrequest;
+
+//unused    
+//    ax_state_msg skipped_mk;
+//    std::vector<ax_pend_msg*> list;
+        
+    ax_usr_state():fb_serial_v1(ax_usr_state::version(),ax_usr_state::name()){}  
+    ~ax_usr_state(){ _hdr._class_name=""; }
+    uint32_t serialize_payload(class serial& s) 
+    {
+    uint32_t done = 0, len = KEY_SZ;
+    
+    done += s.serialize(rk,len);
+    done += s.serialize(cks,len);
+    done += s.serialize(ckr,len);
+    done += s.serialize(dhir,len);
+    done += s.serialize(dhrs,len);
+    done += s.serialize(dhrspub,len);
+    done += s.serialize(dhrr,len);
+    
+    done += s.serialize(ns);
+    done += s.serialize(nr);
+    done += s.serialize(pns);
+    
+    done += s.serialize(ratchet_flag);
+    done += s.serialize(zrtpverified);
+    done += s.serialize(status);
+    done += s.serialize(pending);
+    done += s.serialize(last_sent_keyrequest);
+    done += s.serialize(last_received_keyrequest);
+
+    
+    return done;
+    }    
+    
+    void setup(){
+        for(int c=0;c<KEY_SZ;++c){
+            rk[c] = rand();
+            cks[c] = rand();
+            ckr[c] = rand();
+        }
+        last_sent_keyrequest="?AXLDHSGDSHGDFJHSFD";
+        last_received_keyrequest="";
+    }
+};
+
+
 #endif /* app_types_h */
+
+
+
+
+
+
+

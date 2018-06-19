@@ -17,7 +17,9 @@ std::string&  fb_serial_v1::tob64(){
   b64="";
   if(resut==buffer_sz_err)
     return b64;
-  data_t* d = mem_sink.data();
-  b64 = string(base64_encode((unsigned char*)d->_data,(uint32_t)d->_len));    
+
+  vector<uint8_t> d = mem_sink.data();
+  std::string str(&d[0], &d[d.size()]);
+  b64 = string(base64_encode( (unsigned char const*)str.c_str(),str.length()));    
   return b64;
 }

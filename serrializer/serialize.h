@@ -12,6 +12,17 @@
 #include <string>
 #include <vector>
 #include <list>
+#ifdef __ANDROID__
+#include <sys/endian.h>
+#ifndef htonll
+#define htonll(x) __swap64(x)
+#endif
+
+#ifndef ntohll
+#define ntohll(x) __swap64(x)
+#endif
+
+#endif //__ANDROID__
 
 #define INVALID_DATA_SZ_POS (0)
 
@@ -31,12 +42,14 @@ struct serial
   virtual size_type serialize( uint64_t& value)=0;
   virtual size_type serialize( float& value)=0;
   virtual size_type serialize( uint8_t* value, uint32_t& sz)=0;
-  virtual size_type serialize( std::string& value, uint16_t& len)=0;
-  virtual size_type serialize(std::vector<uint8_t>& data)=0;
-  virtual size_type serialize(std::vector<int8_t>& data)=0;
-  virtual bool  unarchiver()=0;
+  virtual size_type serialize( std::string& value)=0;
+  virtual size_type serialize( std::string& value,uint16_t& len)=0;
+  virtual size_type serialize( std::vector<uint8_t>& data)=0;
+  virtual size_type serialize( std::vector<int8_t>& data)=0;
+    
+  virtual bool  unarchiver() =0;
 
-  virtual void serialize_data_size_init()=0;
+  virtual void serialize_data_size_init() =0;
   virtual uint32_t serialize_data_size(const size_type size)=0;
   virtual bool verify_data_size(const size_type size)=0;
 
@@ -45,9 +58,6 @@ struct serial
 };
 
 //template helpers
-
-
-
 template <class t,class container>
 uint32_t _serialize(class serial& s,container& list){
   uint32_t done = 0;

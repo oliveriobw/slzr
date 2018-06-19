@@ -42,45 +42,58 @@ struct serial_write : public serial
     assert(0);
   }
 
-#ifdef DEBUG
   
   virtual size_type serialize(uint8_t& value)
   {
     size_t pos = position();
+#ifdef DEBUG
     std::cout << "write uint8_t = \"" << value ;
     std::cout << "\" at =" << pos << std::endl;
+#endif  
     _ofs.write((const char*)&value, sizeof value);  
     return sizeof value;
   }
 
   virtual size_type serialize(  uint16_t& value)
   {
+#ifdef DEBUG
     std::cout << "write uint16_t = " << value ;
     uint16_t tmp = htons(value);
     size_t pos = position();
     std::cout << " => " << tmp << ", at =" << pos << std::endl;
+#else  
+    uint16_t tmp = htons(value);
+#endif  
     _ofs.write((const char*)&tmp, sizeof value);  
     return sizeof tmp;
   }
 
   virtual size_type serialize(  uint32_t& value)
   {
-    std::cout << "write uint32_t = " << value ;
-    uint32_t tmp = htonl(value);
-    size_t pos = position();
-    std::cout << " => " << tmp << ", at =" << pos << std::endl;
+#ifdef DEBUG
+  std::cout << "write uint32_t = " << value ;
+  uint32_t tmp = htonl(value);
+  size_t pos = position();
+  std::cout << " => " << tmp << ", at =" << pos << std::endl;
+#else  
+  uint32_t tmp = htonl(value);
+#endif  
     _ofs.write((const char*)&tmp, sizeof value);  
     return sizeof tmp;
   }
   
     virtual  size_type serialize(  uint64_t& value)
   {
-    std::cout << "write uint64_t = " << value ;
-    uint64_t tmp = htonll(value);
-    size_t pos = position();
-    std::cout << " => " << tmp << ", at =" << pos << std::endl;
-    _ofs.write((const char*)&tmp, sizeof value);  
-    return sizeof tmp;
+#ifdef DEBUG
+  std::cout << "write uint64_t = " << value ;
+  uint64_t tmp = htonll(value);
+  size_t pos = position();
+  std::cout << " => " << tmp << ", at =" << pos << std::endl;
+#else  
+  uint64_t tmp = htonll(value);
+#endif  
+  _ofs.write((const char*)&tmp, sizeof value);  
+  return sizeof tmp;
   }
 
   virtual  size_type serialize(  float& value)
@@ -97,11 +110,11 @@ struct serial_write : public serial
   /**
     serializes size folowed by string payload. 
   */
-  size_type serialize( std::string& value, uint16_t& len)
+    size_type serialize( std::string& value)
   {
     //string::length treats contents as a string 
     //assert(value.length()==len);
-  
+   uint16_t len = value.size();
     serialize(len);
             
     std::ostream::pos_type p = _ofs.tellp();
@@ -112,94 +125,79 @@ struct serial_write : public serial
     return ((size_type)(newp-p)) + (size_type)sizeof len;  
   }
 
-  /**
-   * variable buffers
-   */
-  size_type serialize(std::vector<uint8_t>& buf)
-  {
+    size_type serialize( std::string& value,uint16_t& len)
+    {
+    serialize(len);    
+    std::ostream::pos_type p = _ofs.tellp();
+    _ofs.write(value.c_str(),len);
+    std::ostream::pos_type newp = _ofs.tellp();
+    std::cout << "wrote=\"" << value << "\"" << std::endl; //warn: treats it as string
+    assert((newp-p) == len);
+    return ((size_type)(newp-p)) + (size_type)sizeof len;  
+    }
+
+ 
+    /**
+     * vectors - long
+     */
+    size_type serialize(std::vector<uint64_t>& buf)    { 
+//        std::cout << "sz:" << __SIZEOF_LONG__ << std::endl;
+//        std::cout << "sz:" << sizeof(long) << std::endl;
+//        std::cout << "sz:" << alignof(long) << std::endl;
+        
+        uint32_t len = (uint32_t)buf.size();
+        serialize(len);
+        std::ostream::pos_type p = _ofs.tellp();
+        
+        for(int c=0;c<buf.size();++c)
+        {
+            uint64_t tmp = buf[c];
+            serialize(tmp);
+        }
+        
+        std::ostream::pos_type newp = _ofs.tellp();
+            //  std::cout << "wrote=\"" << value << "\"" << std::endl; //warn: treats it as string
+        assert((newp-p) == (len*__SIZEOF_LONG__));
+        return ((size_type)(newp-p)) + (size_type)sizeof len;  
+
+        
+        }   
+
+
+    /**
+     * variable buffers
+     */
+    size_type serialize(std::vector<uint8_t>& buf)
+    {
     uint32_t len = (uint32_t)buf.size();
     serialize(len);
     std::ostream::pos_type p = _ofs.tellp();
     _ofs.write((const char*)&buf[0],len);
     std::ostream::pos_type newp = _ofs.tellp();
-    //  std::cout << "wrote=\"" << value << "\"" << std::endl; //warn: treats it as string
+        //  std::cout << "wrote=\"" << value << "\"" << std::endl; //warn: treats it as string
     assert((newp-p) == len);
     return ((size_type)(newp-p)) + (size_type)sizeof len;  
-  }  
-
-  /**
-   * variable buffers
-   */
-  size_type serialize(std::vector<int8_t>& buf)
-  {
-  uint32_t len = (uint32_t)buf.size();
-  serialize(len);
-  std::ostream::pos_type p = _ofs.tellp();
-  _ofs.write((const char*)&buf[0],len);
-  std::ostream::pos_type newp = _ofs.tellp();
-    //  std::cout << "wrote=\"" << value << "\"" << std::endl; //warn: treats it as string
-  assert((newp-p) == len);
-  return ((size_type)(newp-p)) + (size_type)sizeof len;  
-  }  
-
-  
-#else
-
-  virtual size_type serialize(uint8_t& value)
-  {
-    size_t pos = position();
-    _ofs.write((const char*)&value, sizeof value);  
-    return sizeof value;
-  }
-
-  virtual size_type serialize(  uint16_t& value)
-  {
-    uint16_t tmp = htons(value);
-    _ofs.write((const char*)&tmp, sizeof value);  
-    return sizeof tmp;
-  }
-  
-  virtual size_type serialize(  uint32_t& value)
-  {
-    uint32_t tmp = htonl(value);
-    _ofs.write((const char*)&tmp, sizeof value);  
-    return sizeof tmp;
-  }
-  
-  virtual  size_type serialize(  uint64_t& value)
-  {
-    uint64_t tmp = htonll(value);
-    _ofs.write((const char*)&tmp, sizeof value);  
-    return sizeof tmp;
-  }
-  
-  virtual  size_type serialize(  float& value)
-  {
-    float tmp = float_swap(value);    
-    _ofs.write((const char*)&tmp, sizeof value);  
-    return sizeof tmp;
-  }
-  
-  /**
-   serializes size folowed by string payload. 
-   */
-  size_type serialize( std::string& value, uint16_t& len)
-  {
-    serialize(len);  
+    } 
+    
+    /**
+     * variable buffers
+     */
+    size_type serialize(std::vector<int8_t>& buf)
+    {
+    uint32_t len = (uint32_t)buf.size();
+    serialize(len);
     std::ostream::pos_type p = _ofs.tellp();
-    _ofs.write(value.c_str(),len);
+    _ofs.write((const char*)&buf[0],len);
     std::ostream::pos_type newp = _ofs.tellp();
+        //  std::cout << "wrote=\"" << value << "\"" << std::endl; //warn: treats it as string
+    assert((newp-p) == len);
     return ((size_type)(newp-p)) + (size_type)sizeof len;  
-  }  
-#endif
+    }     
 
+    
+    
   size_type serialize( uint8_t* data, uint32_t& len)
   {
-//    std::string tmp;
-//    tmp.resize(len);
-//    tmp.replace(0, len, (char*)data,len);
-    
-    //like strings, buffers get the len prepended too
     serialize(len);
     
     std::ostream::pos_type p = _ofs.tellp();
